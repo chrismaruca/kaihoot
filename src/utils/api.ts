@@ -24,6 +24,8 @@ export const createGame = async (hostId: string): Promise<string> => {
   const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
   await set(ref(database, `games/${gameId}`), {
     hostId,
+    status: 'running',
+    currentQuestion: null,
     players: {},
   });
   return gameId;

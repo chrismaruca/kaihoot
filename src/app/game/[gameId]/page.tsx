@@ -5,6 +5,7 @@ import { use } from 'react';
 import QuestionCard from '@/components/QuestionCard';
 import Timer from '@/components/Timer';
 import Leaderboard from '@/components/Leaderboard';
+import PodiumView from '@/components/PodiumView';
 import { getDatabase, ref, onValue, set, get } from 'firebase/database';
 import { app } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
@@ -26,11 +27,15 @@ export default function GamePage({ params }: GamePageProps) {
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
+  const [gameStatus, setGameStatus] = useState<string>('active');
+  const [players, setPlayers] = useState<Array<{name: string, score: number}>>([]);
 
   useEffect(() => {
     const database = getDatabase(app);
     const questionRef = ref(database, `games/${gameId}/currentQuestion`);
     const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
+    const statusRef = ref(database, `games/${gameId}/status`);
+    const playersRef = ref(database, `games/${gameId}/players`);
 
     // Get initial score
     get(scoreRef).then((snapshot) => {
@@ -39,7 +44,14 @@ export default function GamePage({ params }: GamePageProps) {
       }
     });
 
-    const unsubscribe = onValue(questionRef, (snapshot) => {
+    // Listen for game status changes
+    const statusUnsubscribe = onValue(statusRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setGameStatus(snapshot.val());
+      }
+    });
+
+    const questionUnsubscribe = onValue(questionRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         setCurrentQuestion(data);
@@ -50,7 +62,23 @@ export default function GamePage({ params }: GamePageProps) {
       }
     });
 
-    return () => unsubscribe();
+    // Listen for players and their scores
+    const playersUnsubscribe = onValue(playersRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const playersData = snapshot.val();
+        const playersArray = Object.entries(playersData).map(([name, data]: [string, any]) => ({
+          name,
+          score: data.score || 0
+        }));
+        setPlayers(playersArray);
+      }
+    });
+
+    return () => {
+      questionUnsubscribe();
+      statusUnsubscribe();
+      playersUnsubscribe();
+    };
   }, [gameId, playerName]);
 
   const handleAnswer = (index: number) => {
@@ -116,7 +144,19 @@ export default function GamePage({ params }: GamePageProps) {
         <span className="font-bold">Score: {score}</span>
       </div>
 
-      {currentQuestion ? (
+      {gameStatus === 'ended' ? (
+        <div className="mt-8 p-6 bg-blue-100 rounded-lg text-center">
+          <h3 className="text-2xl font-bold text-blue-700">Game Over!</h3>
+          <p className="text-gray-700 mt-2">Thank you for playing!</p>
+          <p className="text-gray-700 mt-2">Your final score: {score}</p>
+
+          <PodiumView players={players} />
+
+          <div className="mt-6">
+            <Leaderboard gameId={gameId} currentPlayerName={playerName} />
+          </div>
+        </div>
+      ) : currentQuestion ? (
         <>
           {/* Only show Timer when there's a question and it hasn't been answered yet */}
           {!answerSubmitted && !timeUp && (
@@ -147,8 +187,9 @@ export default function GamePage({ params }: GamePageProps) {
         </div>
       )}
 
-      {/* Leaderboard component */}
-      <Leaderboard gameId={gameId} currentPlayerName={playerName} />
+      {gameStatus !== 'ended' && (
+        <Leaderboard gameId={gameId} currentPlayerName={playerName} />
+      )}
     </div>
   );
 }

@@ -40,6 +40,12 @@ export default function GamePage() {
     pushQuestion(question);
   };
 
+  const endGame = () => {
+    const database = getDatabase(app);
+    set(ref(database, `games/${code}/status`), 'ended');
+    set(ref(database, `games/${code}/currentQuestion`), null);
+  };
+
   if (!code) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -53,7 +59,7 @@ export default function GamePage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
       <h1 className="text-4xl font-bold mb-8">Game Code: {code}</h1>
       <p className="text-lg mb-4">Welcome to the game! The host will start the game shortly.</p>
-      <div className="flex space-x-4">
+      <div className="flex space-x-4 mb-6">
         <button
           onClick={pushQuestion1}
           className="bg-blue-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-600 cursor-pointer"
@@ -67,6 +73,12 @@ export default function GamePage() {
           Question 2: Planet
         </button>
       </div>
+      <button
+        onClick={endGame}
+        className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-600 cursor-pointer"
+      >
+        End Game
+      </button>
     </div>
   );
 }
