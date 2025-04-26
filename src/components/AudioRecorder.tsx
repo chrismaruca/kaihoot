@@ -24,7 +24,7 @@ export default function AudioRecorder() {
 
   const startRecording = () => {
     if (!mediaRecorder) return;
-    mediaRecorder.start(5000); // Emit 5s blobs
+    mediaRecorder.start(15 * 1000); // Emit 15s blobs
     setIsRecording(true);
   };
 
