@@ -1,47 +1,92 @@
 "use client";
 
-import { transcribeAudio } from '@/lib/groq';
-import { useEffect, useState } from 'react';
+import { useState, useRef } from 'react';
 
 export default function AudioRecorder() {
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const sliceIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const waitingToRestartRef = useRef<boolean>(false);
 
-  useEffect(() => {
-    async function setupRecorder() {
+  const sliceDuration = 30 * 1000; // 30 seconds
+
+  const startRecording = async () => {
+    try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      mediaStreamRef.current = stream;
 
-      recorder.ondataavailable = async (e) => {
-        if (e.data.size > 0) {
-          const audioBlob = e.data;
-          await uploadAudioBlob(audioBlob);
+      await startNewRecorder(stream);
+
+      sliceIntervalRef.current = setInterval(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          waitingToRestartRef.current = true;
+          mediaRecorderRef.current.stop(); // triggers onstop
+        }
+      }, sliceDuration);
+
+      setRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+    }
+  };
+
+  const startNewRecorder = (stream: MediaStream): Promise<void> => {
+    return new Promise((resolve) => {
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      const recordedChunks: Blob[] = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
         }
       };
 
-      setMediaRecorder(recorder);
-    }
+      mediaRecorder.onstop = async () => {
+        if (recordedChunks.length > 0) {
+          uploadAudioBlob(recordedChunks);
+        }
 
-    setupRecorder();
-  }, []);
+        // If we're still recording and stopping was triggered by interval
+        if (waitingToRestartRef.current && mediaStreamRef.current) {
+          waitingToRestartRef.current = false;
+          await startNewRecorder(mediaStreamRef.current);
+        }
+      };
 
-  const startRecording = () => {
-    if (!mediaRecorder) return;
-    mediaRecorder.start(15 * 1000); // Emit 15s blobs
-    setIsRecording(true);
+      mediaRecorder.start();
+      resolve();
+    });
   };
 
   const stopRecording = () => {
-    if (!mediaRecorder) return;
-    mediaRecorder.stop();
-    setIsRecording(false);
+    if (sliceIntervalRef.current) {
+      clearInterval(sliceIntervalRef.current);
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+    setRecording(false);
   };
 
-  const uploadAudioBlob = async (blob: Blob) => {
-    const formData = new FormData();
-    formData.append('file', blob);
+  const uploadAudioBlob = async (chunks: Blob[]) => {
+    if (chunks.length === 0) return;
 
-    console.log('Uploading audio blob:', blob);
+    const blob = new Blob(chunks, { type: "audio/webm" });
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const fileName = `audio-${timestamp}.webm`;
+    const file = new File([blob], fileName, { type: blob.type });
+
+    
+
+    const formData = new FormData();
+    formData.append('file', file);
     
     const res = await fetch('/api/transcribe', {
       method: 'POST',
@@ -49,15 +94,15 @@ export default function AudioRecorder() {
     });
 
     const data = await res.json();
-    console.log('Transcribed Text:', data.transcript);
+    console.log('Transcribed Text:', data.transcript.text);
   };
 
   return (
     <div>
-      <button onClick={startRecording} disabled={isRecording}>
+      <button onClick={startRecording} disabled={recording}>
         Start recording
       </button>
-      <button onClick={stopRecording} disabled={!isRecording}>
+      <button onClick={stopRecording} disabled={!recording}>
         Stop recording
       </button>
     </div>

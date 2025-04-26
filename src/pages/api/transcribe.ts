@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { Formidable } from 'formidable';
+import Busboy from 'busboy';
 import fs from 'fs';
+import path from 'path';
 import { transcribeAudio } from '@/lib/groq';
 
 // Disable Next.js default body parsing because we're handling files manually
@@ -11,71 +12,53 @@ export const config = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-  const form = new Formidable({
-    filter: (part) => {
-      if (part.mimetype === 'audio/webm;codecs=opus') {
-        part.mimetype = 'audio/webm'; // Normalize MIME type
-      }
-      return true; // Accept all files
-    },
+  const busboy = Busboy({ headers: req.headers });
+  const uploads: Promise<string>[] = [];
+
+  // @ts-ignore
+  busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    console.log(filename.filename)
+    const saveTo = path.join('/tmp', filename.filename);
+    const writeStream = fs.createWriteStream(saveTo);
+
+    file.pipe(writeStream);
+
+    uploads.push(
+      new Promise((resolve, reject) => {
+        writeStream.on('finish', () => resolve(saveTo));
+        writeStream.on('error', reject);
+      })
+    );
   });
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).end();
-    }
-
-    const file = Array.isArray(files.file) ? files.file[0] : files.file;
-
-    if (!file) {
-      return res.status(400).send('No file uploaded');
-    }
-
-    // if (file.mimetype === 'audio/webm;codecs=opus') {
-    //   file.mimetype = 'audio/webm';
-    // }
-
-    // const supportedMimeTypes = [
-    //   'audio/flac',
-    //   'audio/mp3',
-    //   'audio/mp4',
-    //   'audio/mpeg',
-    //   'audio/mpga',
-    //   'audio/m4a',
-    //   'audio/ogg',
-    //   'audio/opus',
-    //   'audio/wav',
-    //   'audio/webm',
-    // ];
-  
-    // if (!supportedMimeTypes.includes(file.mimetype ?? '')) {
-    //   return res.status(400).json({
-    //     error: `Unsupported file type: ${file.mimetype}. Supported types are: ${supportedMimeTypes.join(', ')}`,
-    //   });
-    // }
-
-    console.log('File details:', {
-      originalFilename: file.originalFilename,
-      mimetype: file.mimetype,
-      filepath: file.filepath,
-    });
-
-    const audioStream = fs.createReadStream(file.filepath);
-
-
+  busboy.on('finish', async () => {
     try {
-      // TODO: Insert speech-to-text logic here
-      // const transcript = await speechToText(audioStream);
-      // const transcript = audioBuffer.length > 0 ? 'Transcription placeholder' : 'No audio detected';
+      const filePaths = await Promise.all(uploads);
+
+      if (filePaths.length === 0) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const filePath = filePaths[0];
+      const audioStream = fs.createReadStream(filePath);
+
       const transcript = await transcribeAudio(audioStream);
+
+      // Clean up the temporary file
+      fs.unlink(filePath, (err) => {
+        if (err) console.error('Failed to delete temporary file:', err);
+      });
 
       res.status(200).json({ transcript });
     } catch (error) {
-      console.error('Transcription error:', error);
-      res.status(500).send('Failed to transcribe audio');
+      console.error('Error processing file:', error);
+      res.status(500).json({ error: 'Failed to process file' });
     }
   });
+
+  req.pipe(busboy);
 }
