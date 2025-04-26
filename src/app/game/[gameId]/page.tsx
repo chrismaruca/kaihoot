@@ -117,11 +117,14 @@ export default function GamePage({ params }: GamePageProps) {
 
       {currentQuestion ? (
         <>
-          <Timer
-            key={timerKey}
-            duration={currentQuestion.timeLimit}
-            onTimeUp={handleTimeUp}
-          />
+          {/* Only show Timer when there's a question and it hasn't been answered yet */}
+          {!answerSubmitted && !timeUp && (
+            <Timer
+              key={timerKey}
+              duration={currentQuestion.timeLimit}
+              onTimeUp={handleTimeUp}
+            />
+          )}
 
           {!timeUp && !answerSubmitted ? (
             <div className="mt-8">
