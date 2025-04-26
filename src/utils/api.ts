@@ -1,15 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, onValue, off } from 'firebase/database';
+import { app } from '../lib/firebase'; // Import the initialized Firebase app
 
-const firebaseConfig = {
-  // TODO: Add your Firebase config here
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-};
-
-const app = initializeApp(firebaseConfig);
+// Remove the duplicate Firebase configuration and initialization
 const database = getDatabase(app);
 
 export interface Question {
