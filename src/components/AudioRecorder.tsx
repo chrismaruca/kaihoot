@@ -1,3 +1,6 @@
+"use client";
+
+import { transcribeAudio } from '@/lib/groq';
 import { useEffect, useState } from 'react';
 
 export default function AudioRecorder() {
@@ -38,6 +41,8 @@ export default function AudioRecorder() {
     const formData = new FormData();
     formData.append('file', blob);
 
+    console.log('Uploading audio blob:', blob);
+    
     const res = await fetch('/api/transcribe', {
       method: 'POST',
       body: formData,

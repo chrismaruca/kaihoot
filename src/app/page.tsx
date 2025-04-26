@@ -1,3 +1,4 @@
+import AudioRecorder from "@/components/AudioRecorder";
 import Image from "next/image";
 
 export default function Home() {
@@ -23,6 +24,7 @@ export default function Home() {
           <li className="tracking-[-.01em]">
             Save and see your changes instantly.
           </li>
+          <AudioRecorder />
         </ol>
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
