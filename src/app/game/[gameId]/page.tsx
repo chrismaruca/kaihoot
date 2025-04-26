@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { use } from 'react';
 import QuestionCard from '@/components/QuestionCard';
 import Timer from '@/components/Timer';
+import Leaderboard from '@/components/Leaderboard';
 import { getDatabase, ref, onValue, set, get } from 'firebase/database';
 import { app } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
@@ -140,8 +141,14 @@ export default function GamePage({ params }: GamePageProps) {
           )}
         </>
       ) : (
-        <p className="text-gray-500">Waiting for the next question...</p>
+        <div className="mt-8 p-6 bg-gray-100 rounded-lg text-center">
+          <h3 className="text-xl font-bold text-gray-700">Waiting for the host</h3>
+          <p className="text-gray-600 mt-2">The next question will appear here soon...</p>
+        </div>
       )}
+
+      {/* Leaderboard component */}
+      <Leaderboard gameId={gameId} currentPlayerName={playerName} />
     </div>
   );
 }
