@@ -27,7 +27,7 @@ export default function JoinPage() {
       }
 
       await joinGame(gameCode, nickname);
-      router.push(`/game/${gameCode}`);
+      router.push(`/game/${gameCode}?player=${nickname}`);
     } catch (error) {
       console.error('Failed to join game:', error);
       alert('Failed to join game. Please try again later.');
