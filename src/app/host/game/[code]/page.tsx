@@ -24,6 +24,7 @@ export default function GamePage() {
     transcript: string;
     visualContext?: string | null;
   }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Handle stream cleanup when component unmounts
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function GamePage() {
   const refreshQuestions = async () => {
     if (!code) return;
 
+    setIsLoading(true);
     try {
       const response = await fetch('/api/generateQuestions', {
         method: 'POST',
@@ -94,8 +96,10 @@ export default function GamePage() {
       }
     } catch (error) {
       console.error('Error refreshing questions:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   if (!code) {
     return (
@@ -172,9 +176,36 @@ export default function GamePage() {
           <div className="flex flex-col md:flex-row gap-4 justify-between">
             <button
               onClick={refreshQuestions}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 font-semibold shadow-md"
+              className={`px-6 py-3 ${isLoading ? 'bg-gray-400' : 'bg-blue-500'} text-white rounded-lg hover:${isLoading ? '' : 'bg-blue-600'} transition duration-200 font-semibold shadow-md`}
+              disabled={isLoading}
             >
-              Create Questions ✨
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white mr-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                  Loading...
+                </div>
+              ) : (
+                'Create Questions ✨'
+              )}
             </button>
 
             <AudioRecorder
