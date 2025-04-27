@@ -6,20 +6,33 @@ interface AnswerDistributionProps {
   gameId: string;
   options: string[];
   optionColors?: string[];
+  preloadedDistribution?: Record<number, number>; // Add this prop for archived questions
 }
 
 const AnswerDistribution: React.FC<AnswerDistributionProps> = ({
   gameId,
   options,
-  optionColors = ['#e21b3c', '#1368ce', '#26890c', '#ffa602']
+  optionColors = ['#e21b3c', '#1368ce', '#26890c', '#ffa602'],
+  preloadedDistribution
 }) => {
-  const [distribution, setDistribution] = useState<Record<number, number>>({});
+  const [distribution, setDistribution] = useState<Record<number, number>>(preloadedDistribution || {});
   const [totalAnswers, setTotalAnswers] = useState<number>(0);
 
   useEffect(() => {
+    // If preloaded distribution is provided, use that instead of setting up Firebase listener
+    if (preloadedDistribution) {
+      setDistribution(preloadedDistribution);
+      const total = Object.values(preloadedDistribution).reduce((sum: number, count: number) => sum + count, 0);
+      setTotalAnswers(total);
+      return;
+    }
+
+    // Only set up Firebase listener if gameId is provided and not empty
+    if (!gameId) return;
+
     console.log(`AnswerDistribution: Setting up listener for game ${gameId} with ${options?.length} options`);
-    if (!gameId || !options || !options.length) {
-      console.log("AnswerDistribution: Missing gameId or options");
+    if (!options || !options.length) {
+      console.log("AnswerDistribution: Missing options");
       return;
     }
 
@@ -45,7 +58,7 @@ const AnswerDistribution: React.FC<AnswerDistributionProps> = ({
     });
 
     return () => unsubscribe();
-  }, [gameId, options]);
+  }, [gameId, options, preloadedDistribution]);
 
   if (!options || options.length === 0) {
     console.log("AnswerDistribution: No options to render");

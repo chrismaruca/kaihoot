@@ -11,6 +11,16 @@ import { ref, set, onValue, get, off, query, orderByChild } from 'firebase/datab
 import { database } from '@/lib/firebase';
 import AnswerDistribution from '@/components/AnswerDistribution';
 
+type LogEntry = {
+  id: string;
+  timestamp: number;
+  type: 'transcript' | 'question';
+  transcript?: string;
+  visualContext?: string | null;
+  question?: HostQuestion;
+  distribution?: Record<string, number>;
+};
+
 export default function GamePage() {
   const params = useParams();
   const code = params?.code as string | undefined;
@@ -21,11 +31,7 @@ export default function GamePage() {
   const [questions, setQuestions] = useState<HostQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<HostQuestion | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [transcriptLogs, setTranscriptLogs] = useState<Array<{
-    timestamp: number;
-    transcript: string;
-    visualContext?: string | null;
-  }>>([]);
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle stream cleanup when component unmounts
@@ -37,12 +43,14 @@ export default function GamePage() {
     };
   }, [visualStream]);
 
-  // Load transcript logs from Firebase
+  // Load transcript logs and archived questions from Firebase
   useEffect(() => {
     if (!code) return;
 
     const transcriptsRef = query(ref(database, `games/${code}/transcripts`), orderByChild('timestamp'));
     const questionsRef = ref(database, `games/${code}/questions`);
+    const archivedQuestionsRef = ref(database, `games/${code}/archives`);
+
     const questionsListener = onValue(questionsRef, (snapshot) => {
       if (!snapshot.exists()) return;
 
@@ -55,29 +63,67 @@ export default function GamePage() {
         answer: value.answer,
         pushedAt: value.pushedAt,
         difficulty: value.difficulty,
+        timeLimit: value.timeLimit,
       }));
-      
+
       setQuestions(questionEntries);
     });
 
-    const loadTranscripts = onValue(transcriptsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
+    // Function to merge and sort transcripts and archived questions
+    const updateLogEntries = async () => {
+      try {
+        // Get transcripts
+        const transcriptsSnapshot = await get(transcriptsRef);
+        const transcriptsData = transcriptsSnapshot.val() || {};
 
-      const transcriptEntries = Object.entries(data).map(([key, value]: [string, any]) => ({
-        id: key,
-        timestamp: value.timestamp,
-        transcript: value.transcript,
-        visualContext: value.visualContext
-      }));
+        // Get archived questions
+        const archivedSnapshot = await get(archivedQuestionsRef);
+        const archivedData = archivedSnapshot.val() || {};
 
-      // Sort by timestamp (newest first)
-      transcriptEntries.sort((a, b) => b.timestamp - a.timestamp);
-      setTranscriptLogs(transcriptEntries);
-    });
+        // Process transcripts
+        const transcriptEntries: LogEntry[] = Object.entries(transcriptsData).map(([key, value]: [string, any]) => ({
+          id: key,
+          timestamp: value.timestamp,
+          type: 'transcript',
+          transcript: value.transcript,
+          visualContext: value.visualContext
+        }));
+
+        // Process archived questions
+        const questionEntries: LogEntry[] = Object.entries(archivedData).map(([key, value]: [string, any]) => ({
+          id: key,
+          timestamp: parseInt(key),
+          type: 'question',
+          question: {
+            text: value.question.text,
+            options: value.question.options,
+            correctAnswer: value.question.correctAnswer,
+            difficulty: value.question.difficulty,
+            timeLimit: value.question.timeLimit,
+          },
+          distribution: value.distribution
+        }));
+
+        // Combine and sort by timestamp (newest first)
+        const combined = [...transcriptEntries, ...questionEntries];
+        combined.sort((a, b) => b.timestamp - a.timestamp);
+
+        setLogEntries(combined);
+      } catch (error) {
+        console.error("Error loading log entries:", error);
+      }
+    };
+
+    // Set up listeners
+    const transcriptsListener = onValue(transcriptsRef, updateLogEntries);
+    const archivedListener = onValue(archivedQuestionsRef, updateLogEntries);
+
+    // Initial load
+    updateLogEntries();
 
     return () => {
-      off(transcriptsRef, 'value', loadTranscripts);
+      off(transcriptsRef, 'value', transcriptsListener);
+      off(archivedQuestionsRef, 'value', archivedListener);
       questionsListener(); // Unsubscribe from questions listener
     };
   }, [code]);
@@ -320,12 +366,12 @@ export default function GamePage() {
         </div>
       </div>
 
-      {/* Transcript Logs Modal */}
+      {/* Transcript & Questions Log Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-3/4 flex flex-col">
             <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-800">Log</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Lesson Log</h2>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-500 hover:text-gray-700 focus:outline-none text-2xl"
@@ -335,33 +381,66 @@ export default function GamePage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              {transcriptLogs.length === 0 ? (
+              {logEntries.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500 text-lg">No transcript logs available yet</p>
+                  <p className="text-gray-500 text-lg">No log entries available yet</p>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {transcriptLogs.map((log) => (
-                    <div key={log.timestamp} className="border rounded-lg p-4 bg-gray-50">
+                  {logEntries.map((entry) => (
+                    <div
+                      key={`${entry.type}-${entry.id}`}
+                      className={`border rounded-lg p-4 ${entry.type === 'transcript' ? 'bg-gray-50' : 'bg-blue-50'}`}
+                    >
                       <div className="flex justify-between mb-2">
                         <span className="font-semibold text-gray-700">
-                          {new Date(log.timestamp).toLocaleString()}
+                          {new Date(entry.timestamp).toLocaleString()}
+                        </span>
+                        <span className="px-2 py-1 text-xs rounded bg-opacity-60 font-medium uppercase tracking-wider">
+                          {entry.type === 'transcript' ? 'Transcript' : 'Question'}
                         </span>
                       </div>
 
-                      <p className="mb-4 text-gray-800">{log.transcript}</p>
+                      {entry.type === 'transcript' ? (
+                        <>
+                          <p className="mb-4 text-gray-800">{entry.transcript}</p>
 
-                      {log.visualContext && (
-                        <div className="mt-2">
-                          <div className="border rounded overflow-hidden">
-                            <img
-                              src={log.visualContext}
-                              alt="Visual context"
-                              className="max-h-64 mx-auto"
-                            />
-                          </div>
+                          {entry.visualContext && (
+                            <div className="mt-2">
+                              <div className="border rounded overflow-hidden">
+                                <img
+                                  src={entry.visualContext}
+                                  alt="Visual context"
+                                  className="max-h-64 mx-auto"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : entry.question ? (
+                        <div className="space-y-4">
+                          <div className="font-medium text-gray-900 text-lg">{entry.question.text}</div>
+
+                          {entry.question.options && entry.distribution && (
+                            <div>
+                              <AnswerDistribution
+                                gameId={""} // Not needed when we provide preloaded distribution
+                                options={entry.question.options}
+                                optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']}
+                                preloadedDistribution={Object.entries(entry.distribution || {}).reduce((acc, [key, value]) => {
+                                  acc[parseInt(key)] = value as number;
+                                  return acc;
+                                }, {} as Record<number, number>)}
+                              />
+                              {entry.question.correctAnswer !== undefined && (
+                                <div className="mt-2 text-right text-sm font-medium text-green-600">
+                                  Correct answer: {entry.question.correctAnswer}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   ))}
                 </div>
