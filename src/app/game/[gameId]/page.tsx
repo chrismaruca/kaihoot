@@ -176,7 +176,7 @@ export default function GamePage({params}: GamePageProps) {
 
       {gameStatus === 'ended' ? (
         <div className="mt-8 p-8 bg-gradient-to-b from-purple-600 to-purple-800 rounded-lg text-center shadow-lg text-white transition-all">
-          <h3 className="text-3xl font-bold mb-4">Game Over!</h3>
+          <h3 className="text-3xl font-bold mb-4">Lesson over!</h3>
           <p className="text-xl mb-2">Thank you for playing!</p>
           <p className="text-2xl mb-6">Your final score: <span className="font-bold">{score}</span></p>
 
@@ -191,8 +191,6 @@ export default function GamePage({params}: GamePageProps) {
         </div>
       ) : currentQuestion ? (
         <>
-          {/* Only show Timer when there's a question and it hasn't been answered yet */}
-
           {!timeUp && !answerSubmitted && !joinedLate ? (
             <div className="mt-6 transition-all transform hover:scale-105">
                 <div className="flex justify-center">
