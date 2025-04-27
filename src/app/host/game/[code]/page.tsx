@@ -7,7 +7,7 @@ import AudioRecorder from '@/components/AudioRecorder';
 import HostQuestionCard from '@/components/HostQuestionCard';
 import { pushQuestion } from '@/utils/api';
 import { HostQuestion } from '@/types/types';
-import { ref, set } from 'firebase/database';
+import { ref, set, onValue, get, off, query, orderByChild } from 'firebase/database';
 import { database } from '@/lib/firebase';
 
 export default function GamePage() {
@@ -18,6 +18,12 @@ export default function GamePage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const [questions, setQuestions] = useState<HostQuestion[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [transcriptLogs, setTranscriptLogs] = useState<Array<{
+    timestamp: number;
+    transcript: string;
+    visualContext?: string | null;
+  }>>([]);
 
   // Handle stream cleanup when component unmounts
   useEffect(() => {
@@ -27,6 +33,33 @@ export default function GamePage() {
       }
     };
   }, [visualStream]);
+
+  // Load transcript logs from Firebase
+  useEffect(() => {
+    if (!code) return;
+
+    const transcriptsRef = query(ref(database, `games/${code}/transcripts`), orderByChild('timestamp'));
+
+    const loadTranscripts = onValue(transcriptsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      const transcriptEntries = Object.entries(data).map(([key, value]: [string, any]) => ({
+        id: key,
+        timestamp: value.timestamp,
+        transcript: value.transcript,
+        visualContext: value.visualContext
+      }));
+
+      // Sort by timestamp (newest first)
+      transcriptEntries.sort((a, b) => b.timestamp - a.timestamp);
+      setTranscriptLogs(transcriptEntries);
+    });
+
+    return () => {
+      off(transcriptsRef, 'value', loadTranscripts);
+    };
+  }, [code]);
 
   const handleQuestionSelect = (index: number) => {
     const selectedQuestion = questions[index];
@@ -151,12 +184,21 @@ export default function GamePage() {
               onVisualStreamChange={setVisualStream}
             />
 
-            <button
-              onClick={endGame}
-              className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 font-semibold shadow-md"
-            >
-              End Game
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowModal(true)}
+                className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200 font-semibold shadow-md"
+              >
+                View Log 📝
+              </button>
+
+              <button
+                onClick={endGame}
+                className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 font-semibold shadow-md"
+              >
+                End Game
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -176,6 +218,66 @@ export default function GamePage() {
           </div>
         </div>
       </div>
+
+      {/* Transcript Logs Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-3/4 flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-800">Log</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700 focus:outline-none text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {transcriptLogs.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500 text-lg">No transcript logs available yet</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {transcriptLogs.map((log) => (
+                    <div key={log.timestamp} className="border rounded-lg p-4 bg-gray-50">
+                      <div className="flex justify-between mb-2">
+                        <span className="font-semibold text-gray-700">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <p className="mb-4 text-gray-800">{log.transcript}</p>
+
+                      {log.visualContext && (
+                        <div className="mt-2">
+                          <div className="border rounded overflow-hidden">
+                            <img
+                              src={log.visualContext}
+                              alt="Visual context"
+                              className="max-h-64 mx-auto"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t flex justify-end">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
