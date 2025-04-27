@@ -217,10 +217,10 @@ export default function GamePage() {
         <div className="flex flex-col space-y-6 mb-6 w-full">
           {/* Visual Input Controls */}
           <div className="p-6 border-2 border-gray-200 rounded-lg bg-gray-50 shadow-md">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Visual Input Settings</h2>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1">
-                <div className="flex space-x-6 mb-4">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">Video Settings</h2>
+            <div className="flex flex-col gap-6">
+              <div className="flex-1 ">
+                <div className="flex justify-center space-x-6">
                   <div className="flex items-center">
                     <input
                       type="radio"
@@ -249,8 +249,8 @@ export default function GamePage() {
                 </div>
               </div>
 
-              <div className="flex-1">
-                <div className="relative h-48 bg-black rounded-lg overflow-hidden border-2 border-gray-300 shadow-inner">
+              <div className="flex-1 flex justify-center items-center">
+                <div className="relative h-48 w-80 bg-black rounded-lg overflow-hidden border-2 border-gray-300 shadow-inner">
                   {!visualStream && (
                     <div className="absolute inset-0 flex text-center items-center justify-center text-white bg-gradient-to-b from-gray-700 to-gray-900">
                       Preview will appear when recording starts
@@ -350,8 +350,8 @@ export default function GamePage() {
 
       {/* Live Answer Distribution */}
       {currentQuestion && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">Live Answer Distribution</h2>
+        <div className="w-full max-w-4xl mb-8">
+          <h2 className="text-2xl font-bold mb-4 text-white text-center drop-shadow-md">Live Answer Distribution</h2>
           <AnswerDistribution
             gameId={code}
             options={currentQuestion.options || []}
@@ -361,7 +361,7 @@ export default function GamePage() {
       )}
 
       <div className="w-full max-w-4xl">
-        <h2 className="text-2xl font-bold mb-4 text-white text-center">Available Questions</h2>
+        <h2 className="text-2xl font-bold mb-4 text-white text-center drop-shadow-md">Available Questions</h2>
         <div className="bg-white/90 rounded-lg shadow-lg p-6 h-96 overflow-y-auto">
           <div className="flex flex-col-reverse gap-4">
             {questions.map((question, index) => (
