@@ -47,7 +47,6 @@ export default function Home() {
       console.error("Failed to join game:", error);
       alert('Failed to join room. Please check your code and try again.');
     }
-    setGameCode("");
   };
 
   return (

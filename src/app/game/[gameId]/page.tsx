@@ -1,48 +1,38 @@
 'use client';
 
-import { use, useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import QuestionCard from '@/components/QuestionCard';
-import Timer from '@/components/Timer';
 import Leaderboard from '@/components/Leaderboard';
 import PodiumView from '@/components/PodiumView';
 import AnswerDistribution from '@/components/AnswerDistribution';
 import { ref, onValue, set, get } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { HostQuestion } from '@/types/types';
-import { GamePageProps } from '@/types/types';
 import { usePlayer } from '@/context/PlayerContext';
-import { useSearchParams } from 'next/navigation';
 import ServerTimer from '@/components/ServerTimer';
+import { useParams } from 'next/navigation';
 
 export default function GamePage({ params }: { params: { gameId: string } }) {
-  const unwrappedParams = use(params);
-  const gameId = unwrappedParams.gameId;
-
-  const searchParams = useSearchParams();
-  const playerName = searchParams?.get('name') || 'Anonymous';
+  // @ts-ignore
+  const { gameId } = useParams();
 
   const {
     player: {
+      name: playerName,
       avatar: playerAvatar
     }
   } = usePlayer();
 
   const [currentQuestion, setCurrentQuestion] = useState<HostQuestion | null>(null);
-  const [timerKey, setTimerKey] = useState(0);
   const [timeUp, setTimeUp] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [gameStatus, setGameStatus] = useState<string>('active');
-  const [isGameEnded, setIsGameEnded] = useState(false);
   const [players, setPlayers] = useState<Array<{name: string, score: number}>>([]);
   const [joinedLate, setJoinedLate] = useState(false);
   const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-
-  // Add a state to control UI stability
   const [uiState, setUiState] = useState<'waiting' | 'question' | 'feedback' | 'gameOver'>('waiting');
-  const isQuestionEndingRef = useRef(false);
   const questionRef = useRef<HostQuestion | null>(null);
 
   useEffect(() => {
@@ -80,10 +70,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         const status = snapshot.val();
 
         if (status === 'ended') {
-          // If there is a current question and time isn't up yet, this is a question ending
-            // This is an actual game end
-            setIsGameEnded(true);
-            setUiState('gameOver');
+          setUiState('gameOver');
         }
 
         setGameStatus(status);
@@ -92,23 +79,15 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
     const questionUnsubscribe = onValue(questionDbRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
+      if (data && gameStatus !== 'ended') {
         questionRef.current = data;
         setCurrentQuestion(data);
-        setTimerKey(prevKey => prevKey + 1);
         setTimeUp(false);
         setAnswerSubmitted(false);
         setAnswerCorrect(null);
         setJoinedLate(false);
         setUiState('question'); // Show question UI when a new question arrives
-        setIsGameEnded(false);
-      } else if (gameStatus === 'ended') {
-        setIsGameEnded(true);
-        setUiState('gameOver');
       }
-      // } else {
-      //   setUiState('waiting');
-      // }
     });
 
     // Listen for players and their scores
@@ -130,7 +109,6 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
     };
   }, [gameId, playerName]);
 
-  // Move these handlers outside the effect for stability
   const handleAnswer = (index: number) => {
     if (!currentQuestion || answerSubmitted || timeUp) return;
 
@@ -143,11 +121,10 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       const count = snapshot.exists() ? snapshot.val() : 0;
       set(distRef, count + 1);
     });
-
-    // Don't show feedback yet, just record the answer
   };
 
   const handleTimeUp = () => {
+    if (uiState === 'gameOver') return;
     setTimeUp(true);
     setUiState('feedback');
 
@@ -156,7 +133,6 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       const isCorrect = selectedAnswerIndex !== null &&
                         currentQuestion?.correctAnswer === currentQuestion?.options[selectedAnswerIndex];
       setAnswerCorrect(isCorrect);
-      setShowFeedback(true);
 
       // Update score in Firebase if correct
       if (isCorrect) {

@@ -15,13 +15,7 @@ const ServerTimer: React.FC<ServerTimerProps> = ({ gameId, onTimeUp }) => {
 
   useEffect(() => {
     const timerRef = ref(database, `games/${gameId}/timer`);
-    const statusRef = ref(database, `games/${gameId}/status`);
     let intervalId: NodeJS.Timeout;
-
-    // Listen for game status changes
-    const statusUnsubscribe = onValue(statusRef, (snapshot) => {
-      const status = snapshot.val();
-    });
 
     // Listen for timer updates from Firebase
     const timerUnsubscribe = onValue(timerRef, (snapshot) => {
@@ -59,7 +53,6 @@ const ServerTimer: React.FC<ServerTimerProps> = ({ gameId, onTimeUp }) => {
         clearInterval(intervalId);
       }
       timerUnsubscribe();
-      statusUnsubscribe();
     };
   }, [gameId, onTimeUp]);
 

@@ -10,6 +10,7 @@ import { HostQuestion } from '@/types/types';
 import { ref, set, onValue, get, off, query, orderByChild } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import AnswerDistribution from '@/components/AnswerDistribution';
+import QRCode from '@/components/QRCode';
 
 type LogEntry = {
   id: string;
@@ -149,6 +150,10 @@ export default function GamePage() {
 
   const endGame = () => {
     set(ref(database, `games/${code}/status`), 'ended');
+<<<<<<< HEAD
+=======
+    // set(ref(database, `games/${code}/currentQuestion`), null);
+>>>>>>> b839fce (add qr code and various changes)
   };
 
   // Add function to end current question
@@ -161,11 +166,14 @@ export default function GamePage() {
       startTime: Date.now() - (currentQuestion.timeLimit * 1000),
       endTime: Date.now()
     });
+<<<<<<< HEAD
 
     // Briefly after, reset to active so the next question can be selected
     setTimeout(() => {
       set(ref(database, `games/${code}/status`), 'active');
     }, 500);
+=======
+>>>>>>> b839fce (add qr code and various changes)
   };
 
   const refreshQuestions = async () => {
@@ -208,7 +216,19 @@ export default function GamePage() {
     <div className="min-h-screen flex flex-col items-center p-8">
       <div className="w-full max-w-4xl bg-white/90 rounded-lg shadow-lg p-8 mb-8">
         <h1 className="text-4xl font-bold mb-4 text-center text-blue-600">Room Code: <span className="text-purple-600">{code}</span></h1>
-        <p className="text-lg mb-8 text-center text-gray-700">Manage your room and send questions to players</p>
+        {/* <p className="text-lg mb-8 text-center text-gray-700">Manage your room and send questions to players</p> */}
+
+        <div className="flex flex-col items-center mb-6 hidden md:flex">
+          <div className="bg-white p-3 rounded-lg shadow-md">
+            <QRCode 
+              value={`asdf/join/${code}`} 
+              size={128}
+              level="M"
+              className="mx-auto"
+            />
+          </div>
+          <p className="mt-3 text-gray-700 text-center">Scan to join the game!</p>
+        </div>
 
         <div className="flex flex-col space-y-6 mb-6 w-full">
           {/* Visual Input Controls */}
