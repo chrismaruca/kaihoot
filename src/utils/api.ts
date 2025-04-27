@@ -49,16 +49,30 @@ export const startGame = async (gameId: string): Promise<void> => {
   await set(ref(database, `games/${gameId}/status`), 'active');
 };
 
-export const pushQuestion = async (gameId: string | undefined, question: HostQuestion) => {
+export const pushQuestion = async (gameId: string, question: any) => {
   if (!gameId) {
     throw new Error('Game ID is required');
   }
+
   // Add timestamp to the question
   const questionWithTimestamp = {
     ...question,
     pushedAt: Date.now() // Add current timestamp
   };
+
   await set(ref(database, `games/${gameId}/currentQuestion`), questionWithTimestamp);
+  await set(ref(database, `games/${gameId}/status`), 'active');
+
+  // Calculate and set the timer with end time based on question's time limit
+  const startTime = Date.now();
+  const endTime = startTime + (question.timeLimit * 1000); // Convert to milliseconds
+
+  await set(ref(database, `games/${gameId}/timer`), {
+    startTime,
+    endTime
+  });
+
+  return questionWithTimestamp;
 };
 
 // Define avatar paths based on index

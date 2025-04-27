@@ -18,6 +18,7 @@ export default function GamePage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const [questions, setQuestions] = useState<HostQuestion[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<HostQuestion | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [transcriptLogs, setTranscriptLogs] = useState<Array<{
     timestamp: number;
@@ -62,6 +63,19 @@ export default function GamePage() {
     };
   }, [code]);
 
+  // Add effect to track current question
+  useEffect(() => {
+    if (!code) return;
+
+    const questionRef = ref(database, `games/${code}/currentQuestion`);
+    const unsubscribe = onValue(questionRef, (snapshot) => {
+      const questionData = snapshot.val();
+      setCurrentQuestion(questionData);
+    });
+
+    return () => unsubscribe();
+  }, [code]);
+
   const handleQuestionSelect = (index: number) => {
     const selectedQuestion = questions[index];
     console.log(`Question selected: ${selectedQuestion.text}`);
@@ -71,6 +85,26 @@ export default function GamePage() {
   const endGame = () => {
     set(ref(database, `games/${code}/status`), 'ended');
     set(ref(database, `games/${code}/currentQuestion`), null);
+  };
+
+  // Add function to end current question
+  const endCurrentQuestion = () => {
+    if (!code || !currentQuestion) return;
+
+    // End the question by setting the timer to expire immediately
+    const timerRef = ref(database, `games/${code}/timer`);
+    set(timerRef, {
+      startTime: Date.now() - (currentQuestion.timeLimit * 1000),
+      endTime: Date.now()
+    });
+
+    // Also set the status to ended to ensure all clients get the notification
+    set(ref(database, `games/${code}/status`), 'ended');
+
+    // Briefly after, reset to active so the next question can be selected
+    setTimeout(() => {
+      set(ref(database, `games/${code}/status`), 'active');
+    }, 500);
   };
 
   const refreshQuestions = async () => {
@@ -216,6 +250,14 @@ export default function GamePage() {
             />
 
             <div className="flex gap-2">
+              {currentQuestion && (
+                <button
+                  onClick={endCurrentQuestion}
+                  className="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-200 font-semibold shadow-md"
+                >
+                  End Question ⏱️
+                </button>
+              )}
               <button
                 onClick={() => setShowModal(true)}
                 className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200 font-semibold shadow-md"
