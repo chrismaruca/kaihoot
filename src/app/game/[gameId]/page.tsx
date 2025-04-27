@@ -12,7 +12,7 @@ import { usePlayer } from '@/context/PlayerContext';
 import ServerTimer from '@/components/ServerTimer';
 import { useParams } from 'next/navigation';
 
-export default function GamePage({ params }: { params: { gameId: string } }) {
+export default function GamePage() {
   // @ts-ignore
   const { gameId } = useParams();
 
