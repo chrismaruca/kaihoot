@@ -150,10 +150,6 @@ export default function GamePage() {
 
   const endGame = () => {
     set(ref(database, `games/${code}/status`), 'ended');
-<<<<<<< HEAD
-=======
-    // set(ref(database, `games/${code}/currentQuestion`), null);
->>>>>>> b839fce (add qr code and various changes)
   };
 
   // Add function to end current question
@@ -166,14 +162,6 @@ export default function GamePage() {
       startTime: Date.now() - (currentQuestion.timeLimit * 1000),
       endTime: Date.now()
     });
-<<<<<<< HEAD
-
-    // Briefly after, reset to active so the next question can be selected
-    setTimeout(() => {
-      set(ref(database, `games/${code}/status`), 'active');
-    }, 500);
-=======
->>>>>>> b839fce (add qr code and various changes)
   };
 
   const refreshQuestions = async () => {
