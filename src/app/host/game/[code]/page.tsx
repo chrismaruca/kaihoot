@@ -243,7 +243,7 @@ export default function GamePage() {
                 key={index}
                 question={question}
                 onSelect={() => handleQuestionSelect(index)}
-                optionColors={['#FF5733', '#33FF57', '#3357FF', '#F3FF33']}
+                optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']}
               />
             ))}
           </div>
