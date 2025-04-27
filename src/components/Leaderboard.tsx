@@ -77,7 +77,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) 
           `}
           style={{ opacity: getOpacity(index) }}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between text-gray-800">
             <div className="flex items-center space-x-3">
               <span className={`h-8 w-8 rounded-full flex items-center justify-center ${getPositionStyle(index)} font-bold`}>
                 {index + 1}
@@ -93,7 +93,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) 
                 />
               </div>
               
-              <span className="font-medium">
+              <span className="font-medium font-semibold">
                 {player.name}
                 {player.name === currentPlayerName && <span className="text-blue-600 ml-1">(You)</span>}
               </span>

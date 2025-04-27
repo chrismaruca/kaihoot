@@ -38,7 +38,7 @@ const PodiumView: React.FC<PodiumViewProps> = ({ players }) => {
 					const textColor = position === 1 ? 'text-gray-800' : 'text-white';
 
 					return (
-						<div key={position} className="flex flex-col items-center mx-4 relative transition-transform hover:scale-105">
+						<div key={position} className="text-4x1 flex flex-col items-center mx-4 relative transition-transform hover:scale-105">
 							{/* Player info with animated glow effect */}
 							<div className={`mb-2 text-center ${position === 0 ? 'animate-pulse' : ''}`}>
 								<div className="text-2xl mb-1">{medal}</div>

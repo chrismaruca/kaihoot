@@ -216,7 +216,7 @@ export default function GamePage() {
           <p className="text-xl mb-2">Thank you for playing!</p>
           <p className="text-2xl mb-6">Your final score: <span className="font-bold">{score}</span></p>
 
-          <div className="p-4 bg-white rounded-lg mb-8">
+          <div className="p-4 bg-white rounded-lg mb-8 hidden md:block">
             <PodiumView players={players} />
           </div>
 
