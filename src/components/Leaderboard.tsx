@@ -124,7 +124,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) 
             <tr
               key={player.name}
               className={`
-                border-b border-gray-200
+                border-b border-gray-200 text-gray-800
                 ${player.name === currentPlayerName ? 'bg-blue-50 font-semibold' : ''}
                 transition-all hover:bg-gray-100
               `}
