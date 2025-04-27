@@ -107,6 +107,7 @@ export default function GamePage() {
       >
         End Game
       </button>
+      </div>
     </div>
   );
 }
