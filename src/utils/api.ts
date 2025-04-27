@@ -102,4 +102,4 @@ export const pushQuestion = async (gameId: string, question: any) => {
 };
 
 // Define avatar paths based on index
-export const getAvatarPath = (index: number) => `https://i.pravatar.cc/150?img=${index + 18}`;
+export const getAvatarPath = (index: number) => `/avatars/avatar${index + 1}.png`;
