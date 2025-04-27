@@ -36,9 +36,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return total + `\n${current.timestamp}: ${current.transcript}`;
         }, '');
 
-        // Generate questions from the transcript, passing the visualContext if available
-        const response = await generateQuestions(transcript, visualContext);
 
+        // Fetch the history of questions asked from Firebase
+        const historyRef = db.ref(`games/${gameId}/questions`);
+        const historySnapshot = await historyRef.get();
+
+        let history: string = '';
+        if (historySnapshot.exists()) {
+          const previousQuestions = historySnapshot.val();
+          history = previousQuestions.map((question: HostQuestion) => question.text).reduce((total: string, current: string) => {
+            return total + `\n${current}`;
+          }, '');
+        }
+
+        // Generate questions from the transcript, passing the visualContext and history if available
+        const response = await generateQuestions(transcript, history, visualContext);
 
         if (!response || !response.text) {
           return res.status(500).json({ error: 'Failed to generate questions' });
