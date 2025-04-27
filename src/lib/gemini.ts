@@ -2,16 +2,6 @@ import {GoogleGenAI, Type} from '@google/genai';
 
 export const gemini = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 
-<<<<<<< HEAD
-export async function generateQuestions(transcript: string, visualContext?: string) {
-    const prompt = `You are an assistant creating questions for use in a quiz game in a classroom. Each question is multiple choice, with four possible answers. One of the answers should be correct, the others should be incorrect. The questions should encourage actively working with the information taught in class, not just rote memorization. Do not repeat similar questions.
-
-    You are provided with a portion of the audio transcript of what the instructor said. You are encouraged to synthesize new questions based on all portions of the transcript received, not just the most recent portion. Questions should focus on the content of the transcript, and should not be about the transcript itself. You should not ask questions about the transcript, such as "What did the instructor say?" or "What is the transcript about?". Instead, focus on the content of the transcript and create questions that test understanding of the content.
-
-    You might also be provided with a frame capture from a camera feed or screenshare, presumably of something like presentation slides or a whiteboard that was being referenced during the time the audio took place. This may provide additional context that you may use to create more meaningful questions. Do not reference the image in questions, only use it to derive context to clarify ambiguous statements in the transcript. You should not ask questions about the image, such as "What is shown in the image?" or "What does the image represent?". Instead, focus on the content of the image and create questions that test understanding of the content.
-
-    Here is the transcript: ${transcript}`;
-=======
 export async function generateQuestions(transcript: string, history: string, visualContext?: string) {
     const systemInstruction = `About you:
     - You are an assistant creating questions for usage in a quiz game in a classroom.
@@ -42,7 +32,6 @@ export async function generateQuestions(transcript: string, history: string, vis
     Transcript with timestamps:
     ${transcript}
     `;
->>>>>>> 0a7aa60 (add history of questions asked as knowledge for ai and edit prompt)
 
     // Create contents array for the request
     const contents = [];
