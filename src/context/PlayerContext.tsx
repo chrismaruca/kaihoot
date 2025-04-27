@@ -13,7 +13,7 @@ const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const [player, setPlayer] = useState<Player>({
     name: 'anonymous',
-    avatar: undefined
+    avatar: '0'
   });
 
   useEffect(() => {

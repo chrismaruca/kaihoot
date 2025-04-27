@@ -53,7 +53,12 @@ export const pushQuestion = async (gameId: string | undefined, question: HostQue
   if (!gameId) {
     throw new Error('Game ID is required');
   }
-  await set(ref(database, `games/${gameId}/currentQuestion`), question);
+  // Add timestamp to the question
+  const questionWithTimestamp = {
+    ...question,
+    pushedAt: Date.now() // Add current timestamp
+  };
+  await set(ref(database, `games/${gameId}/currentQuestion`), questionWithTimestamp);
 };
 
 // Define avatar paths based on index

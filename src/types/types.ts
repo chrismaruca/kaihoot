@@ -13,6 +13,7 @@ export interface QuestionCardProps {
 export interface HostQuestion extends Question {
     correctAnswer: string; // Correct answer as a string
     difficulty?: string; // Optional difficulty level
+    pushedAt?: number; // Timestamp of when the question was pushed
 }
 
 export interface HostQuestionCardProps {

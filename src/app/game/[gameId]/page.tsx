@@ -29,12 +29,29 @@ export default function GamePage({params}: GamePageProps) {
   const [score, setScore] = useState(0);
   const [gameStatus, setGameStatus] = useState<string>('active');
   const [players, setPlayers] = useState<Array<{name: string, score: number}>>([]);
+  const [joinedLate, setJoinedLate] = useState(false);
 
   useEffect(() => {
     const questionRef = ref(database, `games/${gameId}/currentQuestion`);
     const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
     const statusRef = ref(database, `games/${gameId}/status`);
     const playersRef = ref(database, `games/${gameId}/players`);
+    const playerRef = ref(database, `games/${gameId}/players/${playerName}/joinedAt`);
+    
+    get(playerRef).then((snapshot) => {
+      const playerJoinTime = snapshot.exists() ? snapshot.val() : Date.now();
+      
+      // Check if question already exists when player joins
+      get(questionRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const question = snapshot.val();
+          if (question && question.pushedAt) {
+            // If player joined after question was pushed, mark them as late
+            setJoinedLate(playerJoinTime > question.pushedAt);
+          }
+        }
+      });
+    });
 
     // Get initial score
     get(scoreRef).then((snapshot) => {
@@ -58,6 +75,7 @@ export default function GamePage({params}: GamePageProps) {
         setTimeUp(false);
         setAnswerSubmitted(false);
         setAnswerCorrect(null);
+        setJoinedLate(false);
       }
     });
 
@@ -84,6 +102,19 @@ export default function GamePage({params}: GamePageProps) {
     console.log(playerName)
     if (currentQuestion && !answerSubmitted && !timeUp) {
       const isCorrect = currentQuestion.correctAnswer === currentQuestion.options[index];
+
+      // Get the current timestamp
+      const now = Date.now();
+    
+      // Get the timestamp when the question was pushed (from the question data)
+      const questionTimestamp = currentQuestion.pushedAt || 0;
+      const timeLimit = currentQuestion.timeLimit * 1000; // Convert to milliseconds
+      
+      // Check if the answer is within the time limit
+      if (now - questionTimestamp > timeLimit) {
+        setTimeUp(true);
+        return;
+      }
 
       setAnswerCorrect(isCorrect);
       setAnswerSubmitted(true);
@@ -161,25 +192,23 @@ export default function GamePage({params}: GamePageProps) {
       ) : currentQuestion ? (
         <>
           {/* Only show Timer when there's a question and it hasn't been answered yet */}
-          {!answerSubmitted && !timeUp && (
-            <div className="flex justify-center">
-              <Timer
-                key={timerKey}
-                duration={currentQuestion.timeLimit}
-                onTimeUp={handleTimeUp}
-              />
-            </div>
-          )}
 
-          {!timeUp && !answerSubmitted ? (
+          {!timeUp && !answerSubmitted && !joinedLate ? (
             <div className="mt-6 transition-all transform hover:scale-105">
+                <div className="flex justify-center">
+                <Timer
+                  key={timerKey}
+                  duration={currentQuestion.timeLimit}
+                  onTimeUp={handleTimeUp}
+                />
+              </div>
               <QuestionCard
                 question={currentQuestion}
                 onAnswer={handleAnswer}
-                optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']} // Add colorful options
+                optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']}
               />
-            </div>
-          ) : (
+          </div>
+        ) : (
             <div className="transition-all transform animate-fade-in">
               {renderFeedback()}
             </div>
