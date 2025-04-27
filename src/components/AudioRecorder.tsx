@@ -29,7 +29,7 @@ export default function AudioRecorder({
   // Use external videoRef if provided, otherwise use internal
   const videoRef = externalVideoRef || internalVideoRef;
 
-  const sliceDuration = 5 * 1000;
+  const sliceDuration = 15 * 1000;
 
   // Validate gameId on component mount
   useEffect(() => {
