@@ -97,16 +97,19 @@ export default function AudioRecorder({
   };
 
   const captureFrame = (): string | null => {
-    if (!videoRef.current || !visualStreamActive) return null;
-
+    console.log("Capturing frame from video element", videoRef.current, visualStreamRef.current);
+    // don’t rely on visualStreamActive (stale in closures) – check the actual ref
+    if (!videoRef.current || !visualStreamRef.current) return null;
+    console.log("2");
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
+      console.log("context found");
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL('image/jpeg', 0.8); // 0.8 quality to reduce size
+      return canvas.toDataURL('image/jpeg', 0.8);
     }
 
     return null;
