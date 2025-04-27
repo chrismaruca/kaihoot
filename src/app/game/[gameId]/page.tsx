@@ -228,7 +228,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       )}
 
       {uiState === 'question' && currentQuestion && !timeUp && (
-        <div className="mt-6 transition-all transform hover:scale-105">
+        <div className="mt-6 transition-all transform">
           <div className="flex justify-center">
             <ServerTimer
               gameId={gameId}
