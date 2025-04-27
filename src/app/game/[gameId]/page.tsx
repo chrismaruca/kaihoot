@@ -36,6 +36,8 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [players, setPlayers] = useState<Array<{name: string, score: number}>>([]);
   const [joinedLate, setJoinedLate] = useState(false);
+  const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   // Add a state to control UI stability
   const [uiState, setUiState] = useState<'waiting' | 'question' | 'feedback' | 'gameOver'>('waiting');
@@ -141,45 +143,39 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   const handleAnswer = (index: number) => {
     if (!currentQuestion || answerSubmitted || timeUp) return;
 
-    const isCorrect = currentQuestion.correctAnswer === currentQuestion.options[index];
-    const now = Date.now();
-    const questionTimestamp = currentQuestion.pushedAt || 0;
-    const timeLimit = currentQuestion.timeLimit * 1000;
-
-    // Check if answer is within time limit
-    if (now - questionTimestamp > timeLimit) {
-      setTimeUp(true);
-      setUiState('feedback');
-      return;
-    }
-
-    setAnswerCorrect(isCorrect);
+    setSelectedAnswerIndex(index);
     setAnswerSubmitted(true);
-    setUiState('feedback'); // Switch to feedback UI when answered
-
-    // Update score in Firebase if correct
-    if (isCorrect) {
-      const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
-
-      get(scoreRef).then((snapshot) => {
-        const currentScore = (snapshot.exists() ? snapshot.val() : 0) || 0;
-        const newScore = currentScore + 1;
-        set(scoreRef, newScore);
-        setScore(newScore);
-      });
-    }
+    // Don't show feedback yet, just record the answer
   };
 
   const handleTimeUp = () => {
-    if (answerSubmitted) return; // Don't set timeUp if already answered
-
     setTimeUp(true);
     setUiState('feedback');
+
+    if (answerSubmitted) {
+      // Now that time is up, check if the answer was correct
+      const isCorrect = selectedAnswerIndex !== null &&
+                        currentQuestion?.correctAnswer === currentQuestion?.options[selectedAnswerIndex];
+      setAnswerCorrect(isCorrect);
+      setShowFeedback(true);
+
+      // Update score in Firebase if correct
+      if (isCorrect) {
+        const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
+
+        get(scoreRef).then((snapshot) => {
+          const currentScore = (snapshot.exists() ? snapshot.val() : 0) || 0;
+          const newScore = currentScore + 1;
+          set(scoreRef, newScore);
+          setScore(newScore);
+        });
+      }
+    }
   };
 
   // Render feedback component based on answer correctness
   const renderFeedback = () => {
-    if (!currentQuestion) return null;
+    if (!currentQuestion || !timeUp) return null;
 
     if (answerSubmitted) {
       return (
@@ -195,7 +191,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
           <p className="text-gray-600 mt-2">Waiting for the next question...</p>
         </div>
       );
-    } else if (timeUp) {
+    } else {
       return (
         <div className="mt-8 p-6 bg-gray-100 rounded-lg text-center">
           <h3 className="text-xl font-bold text-gray-700">Time's up!</h3>
@@ -204,7 +200,33 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         </div>
       );
     }
-    return null;
+  };
+
+  // Render pending answer feedback while waiting for time to end
+  const renderPendingFeedback = () => {
+    if (!currentQuestion || !answerSubmitted || timeUp || selectedAnswerIndex === null) return null;
+
+    // Get the selected option text
+    const selectedOption = currentQuestion.options[selectedAnswerIndex];
+
+    // Get the corresponding option color
+    const optionColors = ['#e21b3c', '#1368ce', '#26890c', '#ffa602'];
+    const selectedColor = optionColors[selectedAnswerIndex] || '#3b82f6'; // Default to blue if index is out of bounds
+
+    return (
+      <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg text-center">
+        <h3 className="text-xl font-bold text-blue-700">Answer Submitted</h3>
+        <p className="text-gray-600 mt-2">Wait for the timer to end to see if you're correct!</p>
+        <div className="mt-3 flex justify-center">
+          <span
+            className="px-4 py-2 rounded-lg text-white font-medium"
+            style={{ backgroundColor: selectedColor }}
+          >
+            You selected: {selectedOption}
+          </span>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -231,7 +253,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         </div>
       )}
 
-      {uiState === 'question' && currentQuestion && !timeUp && !answerSubmitted && !joinedLate && (
+      {uiState === 'question' && currentQuestion && !timeUp && (
         <div className="mt-6">
           <div className="flex justify-center">
             <ServerTimer
@@ -239,11 +261,16 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
               onTimeUp={handleTimeUp}
             />
           </div>
-          <QuestionCard
-            question={currentQuestion}
-            onAnswer={handleAnswer}
-            optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']}
-          />
+
+          {!answerSubmitted && !joinedLate ? (
+            <QuestionCard
+              question={currentQuestion}
+              onAnswer={handleAnswer}
+              optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']}
+            />
+          ) : answerSubmitted && (
+            renderPendingFeedback()
+          )}
         </div>
       )}
 
