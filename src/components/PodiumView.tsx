@@ -16,45 +16,40 @@ const PodiumView: React.FC<PodiumViewProps> = ({ players }) => {
 	// Get top 3 players
 	const topPlayers = sortedPlayers.slice(0, 3);
 
-	// Make sure we have 3 positions even if less than 3 players
+	// Ensure we have exactly 3 positions (fill with empty spots if needed)
 	while (topPlayers.length < 3) {
-		topPlayers.push({ name: '', score: 0 });
+		topPlayers.push({ name: '---', score: 0 });
 	}
 
-	// Rearrange to place first place in the middle
-	// [1st, 2nd, 3rd] -> [2nd, 1st, 3rd]
+	// Display order is 2nd, 1st, 3rd place
 	const displayOrder = [topPlayers[1], topPlayers[0], topPlayers[2]];
 
 	return (
-		<div className="flex flex-col items-center justify-end mt-8">
-			<h2 className="text-2xl font-bold mb-8">Top Players</h2>
+		<div className="p-4">
+			<h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Winner's Podium</h3>
 
 			<div className="flex items-end justify-center w-full">
 				{displayOrder.map((player, index) => {
 					const position = index === 1 ? 0 : index === 0 ? 1 : 2;
 					const height = position === 0 ? 'h-40' : position === 1 ? 'h-32' : 'h-24';
 					const bgColor = position === 0 ? 'bg-yellow-400' : position === 1 ? 'bg-gray-300' : 'bg-amber-700';
-					const textSize = position === 0 ? 'text-2xl' : 'text-xl';
 					const medal = position === 0 ? '🥇' : position === 1 ? '🥈' : '🥉';
+					const place = position === 0 ? '1st' : position === 1 ? '2nd' : '3rd';
+					const textColor = position === 1 ? 'text-gray-800' : 'text-white';
 
 					return (
-						<div key={position} className="flex flex-col items-center mx-4">
-							{player.name && (
-								<>
-									<div className="mb-2 text-center">
-										<div className={`font-bold ${textSize}`}>{player.name}</div>
-										<div className="text-gray-700">{player.score} points</div>
-									</div>
+						<div key={position} className="flex flex-col items-center mx-4 relative transition-transform hover:scale-105">
+							{/* Player info with animated glow effect */}
+							<div className={`mb-2 text-center ${position === 0 ? 'animate-pulse' : ''}`}>
+								<div className="text-2xl mb-1">{medal}</div>
+								<div className="font-bold text-gray-800">{player.name}</div>
+								<div className="font-medium text-gray-700">{player.score} pts</div>
+							</div>
 
-									<div className={`flex items-center justify-center ${height} w-24 ${bgColor} rounded-t-lg relative`}>
-										<span className="text-3xl mt-4">{medal}</span>
-										<span className="font-bold text-white">{position + 1}</span>
-									</div>
-								</>
-							)}
-							{!player.name && (
-								<div className={`${height} w-24 ${bgColor} rounded-t-lg opacity-50`}></div>
-							)}
+							{/* Podium stand */}
+							<div className={`${height} w-24 ${bgColor} rounded-t-lg flex items-center justify-center border-t-4 border-white shadow-lg`}>
+								<span className={`font-bold ${textColor} text-xl`}>{place}</span>
+							</div>
 						</div>
 					);
 				})}
