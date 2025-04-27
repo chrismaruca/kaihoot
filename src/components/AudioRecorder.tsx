@@ -4,21 +4,32 @@ import { useState, useRef, useEffect } from "react";
 
 interface AudioRecorderProps {
   gameId: string;
-  captureType?: "camera" | "screen"; // Optional prop to specify what type of visual context to capture
-  onAudioAvailable?: (transcript: string, visualData?: string) => void; // Callback for when audio and visual data are available
+  captureType?: "camera" | "screen";
+  videoRef?: React.RefObject<HTMLVideoElement>; // External video element for preview
+  onVisualStreamChange?: (stream: MediaStream | null) => void; // Callback to update parent's stream state
+  onAudioAvailable?: (transcript: string, visualData?: string) => void;
 }
 
-export default function AudioRecorder({ gameId, captureType = "camera", onAudioAvailable }: AudioRecorderProps) {
+export default function AudioRecorder({
+  gameId,
+  captureType = "camera",
+  videoRef: externalVideoRef,
+  onVisualStreamChange,
+  onAudioAvailable
+}: AudioRecorderProps) {
   const [recording, setRecording] = useState(false);
   const [visualStreamActive, setVisualStreamActive] = useState(false);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const visualStreamRef = useRef<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const internalVideoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const sliceIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const waitingToRestartRef = useRef<boolean>(false);
 
-  const sliceDuration = 30 * 1000; // 30 seconds
+  // Use external videoRef if provided, otherwise use internal
+  const videoRef = externalVideoRef || internalVideoRef;
+
+  const sliceDuration = 5 * 1000;
 
   // Validate gameId on component mount
   useEffect(() => {
@@ -54,6 +65,12 @@ export default function AudioRecorder({ gameId, captureType = "camera", onAudioA
       }
 
       setVisualStreamActive(true);
+
+      // Notify parent component about the stream change
+      if (onVisualStreamChange) {
+        onVisualStreamChange(stream);
+      }
+
       return true;
     } catch (error) {
       console.error(`Error starting ${captureType} capture:`, error);
@@ -72,6 +89,11 @@ export default function AudioRecorder({ gameId, captureType = "camera", onAudioA
     }
 
     setVisualStreamActive(false);
+
+    // Notify parent component about the stream change
+    if (onVisualStreamChange) {
+      onVisualStreamChange(null);
+    }
   };
 
   const captureFrame = (): string | null => {
@@ -92,7 +114,7 @@ export default function AudioRecorder({ gameId, captureType = "camera", onAudioA
 
   const startRecording = async () => {
     try {
-      // Start visual stream first
+      // Start visual stream first - use the captureType provided by parent
       const visualReady = await startVisualStream();
       if (!visualReady) {
         console.warn("Visual stream couldn't be started, continuing with audio only");
@@ -213,14 +235,16 @@ export default function AudioRecorder({ gameId, captureType = "camera", onAudioA
 
   return (
     <div className="flex flex-col space-y-4">
-      {/* Hidden video element for capturing frames */}
-      <video
-        ref={videoRef}
-        className="hidden"
-        autoPlay
-        playsInline
-        muted
-      />
+      {/* Only render video element if we're using the internal one */}
+      {!externalVideoRef && (
+        <video
+          ref={internalVideoRef}
+          className="hidden"
+          autoPlay
+          playsInline
+          muted
+        />
+      )}
 
       <div className="flex items-center space-x-4">
         <button
@@ -232,7 +256,7 @@ export default function AudioRecorder({ gameId, captureType = "camera", onAudioA
               : "bg-blue-500 hover:bg-blue-600"
           }`}
         >
-          Start Recording{visualStreamActive && captureType === "screen" ? " & Screen Capture" : visualStreamActive ? " & Camera" : ""}
+          Start Recording
         </button>
         <button
           onClick={stopRecording}
