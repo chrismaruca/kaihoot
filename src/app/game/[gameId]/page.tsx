@@ -9,20 +9,22 @@ import PodiumView from '@/components/PodiumView';
 import { ref, onValue, set, get } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
-import { Question } from '@/types/types';
+import { HostQuestion, Question } from '@/types/types';
 
 interface GamePageProps {
-  params: {
-    gameId: string;
-  };
+  params: GameParams;
+}
+
+interface GameParams {
+  gameId: string;
 }
 
 export default function GamePage({ params }: GamePageProps) {
-  const { gameId } = use(params);
+  const { gameId } = params;
   const searchParams = useSearchParams();
   const playerName = searchParams?.get('player') || 'anonymous';
 
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<HostQuestion | null>(null);
   const [timerKey, setTimerKey] = useState(0);
   const [timeUp, setTimeUp] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
@@ -111,6 +113,8 @@ export default function GamePage({ params }: GamePageProps) {
 
   // Render feedback component based on answer correctness
   const renderFeedback = () => {
+    if (!currentQuestion) return null;
+
     if (answerSubmitted) {
       return (
         <div className={`mt-8 p-6 rounded-lg text-center ${answerCorrect ? 'bg-green-100' : 'bg-red-100'}`}>
