@@ -51,7 +51,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
-    <h1 className="text-4xl font-bold mb-12 text-white drop-shadow-md">k-AI-hoot!</h1>
+    <h1 className="text-4xl font-bold mb-12 text-white drop-shadow-md">kaihoot!</h1>
     <div className="flex flex-col items-center w-full max-w-md gap-10 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
       {/* Join a game section */}
       <div className="flex flex-col gap-4 w-full">

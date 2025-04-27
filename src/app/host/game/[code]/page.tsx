@@ -209,7 +209,7 @@ export default function GamePage() {
         <div className="flex flex-col items-center mb-6 hidden md:flex">
           <div className="bg-white p-3 rounded-lg shadow-md">
             <QRCode 
-              value={`asdf/join/${code}`} 
+              value={`https://kaihoot.study/join/${code}`} 
               size={128}
               level="M"
               className="mx-auto"
