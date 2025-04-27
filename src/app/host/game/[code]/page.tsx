@@ -17,26 +17,7 @@ export default function GamePage() {
   const [visualStream, setVisualStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const [questions, setQuestions] = useState<HostQuestion[]>([
-    {
-      text: 'What is the capital of France?',
-      options: ['Paris', 'London', 'Berlin', 'Madrid'],
-      correctAnswer: 'Paris',
-      timeLimit: 30,
-    },
-    {
-      text: 'Which planet is known as the Red Planet?',
-      options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
-      correctAnswer: 'Mars',
-      timeLimit: 20,
-    },
-    {
-      text: 'What is 2 + 2?',
-      options: ['3', '4', '5', '6'],
-      correctAnswer: '4',
-      timeLimit: 15,
-    },
-  ]);
+  const [questions, setQuestions] = useState<HostQuestion[]>([]);
 
   // Handle stream cleanup when component unmounts
   useEffect(() => {
@@ -160,7 +141,7 @@ export default function GamePage() {
               onClick={refreshQuestions}
               className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 font-semibold shadow-md"
             >
-              Refresh Questions
+              Create Questions ✨
             </button>
 
             <AudioRecorder
