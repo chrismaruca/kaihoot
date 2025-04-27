@@ -241,7 +241,7 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
   return (
     <div className="container mx-auto p-8">
       <div className="text-right mb-4">
-        <span className="font-bold text-lg py-3 px-6 bg-gray-100 rounded-full shadow-lg inline-block">Score: <span className="text-blue-600">{score}</span></span>
+        <span className="text-gray-800 font-bold text-lg py-3 px-6 bg-gray-100 rounded-full shadow-lg inline-block">Score: <span className="text-blue-600">{score}</span></span>
       </div>
 
       {uiState === 'gameOver' && (

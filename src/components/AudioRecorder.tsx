@@ -237,7 +237,7 @@ export default function AudioRecorder({
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <>
       {/* Only render video element if we're using the internal one */}
       {!externalVideoRef && (
         <video
@@ -249,30 +249,30 @@ export default function AudioRecorder({
         />
       )}
 
-      <div className="flex items-center space-x-4">
+      <div className="flex gap-2 w-full"> 
         <button
           onClick={startRecording}
           disabled={recording}
-          className={`px-6 py-3 rounded-lg font-bold text-white ${
+          className={`px-6 py-3 rounded-lg font-bold text-white shadow-md transition duration text-center  ${
             recording
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-blue-500 hover:bg-blue-600"
           }`}
         >
-          Start Recording
+          Start Recording 🎙️
         </button>
         <button
           onClick={stopRecording}
           disabled={!recording}
-          className={`px-6 py-3 rounded-lg font-bold text-white ${
+          className={`px-6 py-3 rounded-lg font-bold text-white shadow-md transition duration-200 text-center  ${
             !recording
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-red-500 hover:bg-red-600"
           }`}
         >
-          Stop Recording
+          Stop Recording ⏹️
         </button>
       </div>
-    </div>
+    </>
   );
 }
