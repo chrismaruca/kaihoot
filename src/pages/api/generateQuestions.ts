@@ -22,7 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Assuming the transcript is stored as the latest entry in the transcripts node
         const transcripts: TranscriptStep[] = snapshot.val();
-        console.log(Object.values(transcripts));
+        if (!transcripts || Object.keys(transcripts).length === 0) {
+          return res.status(404).json({ error: 'No transcripts found for the given gameId' });
+        }
 
         // Extract transcript text and visual context (if available)
         let visualContext: string | undefined;
