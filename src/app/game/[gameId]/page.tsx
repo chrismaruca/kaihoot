@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { use } from 'react';
 import QuestionCard from '@/components/QuestionCard';
 import Timer from '@/components/Timer';
 import Leaderboard from '@/components/Leaderboard';
@@ -9,7 +8,7 @@ import PodiumView from '@/components/PodiumView';
 import { ref, onValue, set, get } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
-import { HostQuestion, Question } from '@/types/types';
+import { HostQuestion } from '@/types/types';
 
 interface GamePageProps {
   params: GameParams;
@@ -85,9 +84,7 @@ export default function GamePage({ params }: GamePageProps) {
 
   const handleAnswer = (index: number) => {
     if (currentQuestion && !answerSubmitted && !timeUp) {
-      const isCorrect =
-        (typeof currentQuestion.correctAnswer === 'number' && currentQuestion.correctAnswer === index) ||
-        (typeof currentQuestion.correctAnswer === 'string' && currentQuestion.correctAnswer === currentQuestion.options[index]);
+      const isCorrect = currentQuestion.correctAnswer === currentQuestion.options[index];
 
       setAnswerCorrect(isCorrect);
       setAnswerSubmitted(true);

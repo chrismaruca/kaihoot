@@ -26,3 +26,10 @@ export interface TranscriptStep {
     timestamp: string;
     context?: string;
 }
+
+export interface AnswerButtonProps {
+    option: string;
+    color: string;
+    onClick: () => void;
+    disabled?: boolean;
+}

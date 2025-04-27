@@ -1,9 +1,4 @@
-interface AnswerButtonProps {
-  option: string;
-  color: string;
-  onClick: () => void;
-  disabled?: boolean;
-}
+import { AnswerButtonProps } from "@/types/types";
 
 export default function AnswerButton({ option, color, onClick, disabled }: AnswerButtonProps) {
   return (
