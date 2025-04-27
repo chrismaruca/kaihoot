@@ -7,6 +7,8 @@ import AudioRecorder from '@/components/AudioRecorder';
 import HostQuestionCard from '@/components/HostQuestionCard';
 import { pushQuestion } from '@/utils/api';
 import { HostQuestion } from '@/types/types';
+import { getDatabase, ref, set } from 'firebase/database';
+import { database } from '@/lib/firebase';
 
 export default function GamePage() {
   const params = useParams();
@@ -40,7 +42,6 @@ export default function GamePage() {
   };
 
   const endGame = () => {
-    const database = getDatabase(app);
     set(ref(database, `games/${code}/status`), 'ended');
     set(ref(database, `games/${code}/currentQuestion`), null);
   };
