@@ -13,7 +13,7 @@ const HostQuestionCard: React.FC<HostQuestionCardProps> = ({
   return (
     <div>
         <div
-          className="p-4 mb-6 border rounded-lg" // Added spacing with `mb-6`
+          className="p-4 mb-6 border-2 rounded-lg border-gray-300 shadow-md hover:shadow-lg" // Added spacing with `mb-6`
           style={{
             backgroundColor: '',
             color: '',
@@ -29,7 +29,8 @@ const HostQuestionCard: React.FC<HostQuestionCardProps> = ({
           }}
           onClick={() => handleCardClick()} // Handle card click
         >
-          <h2 className="text-xl font-bold mb-2">{question.text}</h2>
+          <h2 className="text-xl font-bold text-gray-800">{question.text}</h2>
+          <div className='text-xl font-bold mb-3 text-gray-600 border-b pb-2'></div>
           <ul>
             {question.options.map((option, optionIndex) => (
               <li

@@ -63,7 +63,7 @@ export default function Home() {
             value={gameCode}
             onChange={(e) => setGameCode(e.target.value)}
             placeholder="Enter room code"
-            className="flex-1 p-4 text-lg text-gray-400 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="flex-1 p-4 text-lg text-gray-600  border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             onKeyDown={(e) => e.key === "Enter" && handleJoinGame()}
           />
           <button

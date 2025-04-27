@@ -154,8 +154,8 @@ export default function GamePage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto text-center">
-          <h1 className="text-4xl font-bold mb-8 text-red-600">Invalid Game Code</h1>
-          <p className="text-lg text-gray-700">The game code is missing or invalid. Please check the URL and try again.</p>
+          <h1 className="text-4xl font-bold mb-8 text-red-600">Invalid Room Code</h1>
+          <p className="text-lg text-gray-700">The room code is missing or invalid. Please check the URL and try again.</p>
         </div>
       </div>
     );
@@ -164,8 +164,8 @@ export default function GamePage() {
   return (
     <div className="min-h-screen flex flex-col items-center p-8">
       <div className="w-full max-w-4xl bg-white/90 rounded-lg shadow-lg p-8 mb-8">
-        <h1 className="text-4xl font-bold mb-4 text-center text-blue-600">Game Code: <span className="text-purple-600">{code}</span></h1>
-        <p className="text-lg mb-8 text-center text-gray-700">Manage your game session and send questions to players</p>
+        <h1 className="text-4xl font-bold mb-4 text-center text-blue-600">Room Code: <span className="text-purple-600">{code}</span></h1>
+        <p className="text-lg mb-8 text-center text-gray-700">Manage your room and send questions to players</p>
 
         <div className="flex flex-col space-y-6 mb-6 w-full">
           {/* Visual Input Controls */}
@@ -284,7 +284,7 @@ export default function GamePage() {
                 onClick={endGame}
                 className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 font-semibold shadow-md"
               >
-                End Game
+                End Lesson
               </button>
             </div>
           </div>
