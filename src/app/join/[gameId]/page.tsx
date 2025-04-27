@@ -87,23 +87,23 @@ export default function JoinPage() {
   };
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Join a Game</h1>
-      <div className="max-w-md mx-auto space-y-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-8">
+      <h1 className="text-4xl font-bold mb-12 text-white drop-shadow-md">Join a room</h1>
+
+      <div className="flex flex-col items-center w-full max-w-md gap-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 max-w-md mx-auto space-y-4">
+        {/* <h2 className="text-2xl font-semibold text-center text-gray-800">Your name</h2> */}
         <input
           type="text"
           placeholder="Your name"
-          className="w-full p-3 border rounded-lg"
+          className="flex-1 p-2 text-lg text-gray-600 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
-        
+        {/* <div className="w-full border-t border-gray-400 my-4"></div> */}
 
         <div>
-          <label className="block text-lg font-medium mb-3">
-            Select Your Avatar
-          </label>
+        {/* <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800">Your avatar</h2> */}
           <div className="grid grid-cols-3 gap-4">
             {/* Create 6 avatar options (indexes 0-5) */}
             {Array.from({ length: 6 }).map((_, index) => (

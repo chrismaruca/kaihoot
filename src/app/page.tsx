@@ -52,18 +52,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
-    <h1 className="text-4xl font-bold mb-12">k-AI-hoot!</h1>
-    <div className="flex flex-col items-center w-full max-w-md gap-10">
+    <h1 className="text-4xl font-bold mb-12 text-white drop-shadow-md">k-AI-hoot!</h1>
+    <div className="flex flex-col items-center w-full max-w-md gap-10 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
       {/* Join a game section */}
       <div className="flex flex-col gap-4 w-full">
-        <h2 className="text-2xl font-semibold text-center">Join a room</h2>
+        <h2 className="text-2xl font-semibold text-center text-gray-800">Join a room</h2>
         <div className="flex gap-2">
           <input
             type="text"
             value={gameCode}
             onChange={(e) => setGameCode(e.target.value)}
             placeholder="Enter room code"
-            className="flex-1 p-4 text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="flex-1 p-4 text-lg text-gray-400 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             onKeyDown={(e) => e.key === "Enter" && handleJoinGame()}
           />
           <button
@@ -75,11 +75,11 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="w-full border-t border-gray-200 my-4"></div>
+      <div className="w-full border-t border-gray-400 my-4"></div>
 
       {/* Host a game section */}
       <div className="w-full">
-        <h2 className="text-2xl font-semibold text-center mb-4">Create a new room</h2>
+        <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800">Create a new room</h2>
         <button
           onClick={handleCreateGame}
           disabled={isCreating}

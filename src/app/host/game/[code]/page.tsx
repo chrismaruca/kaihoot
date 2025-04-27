@@ -237,7 +237,7 @@ export default function GamePage() {
       <div className="w-full max-w-4xl">
         <h2 className="text-2xl font-bold mb-4 text-white text-center">Available Questions</h2>
         <div className="bg-white/90 rounded-lg shadow-lg p-6 h-96 overflow-y-auto">
-          <div className="space-y-4">
+          <div className="flex flex-col-reverse gap-4">
             {questions.map((question, index) => (
               <HostQuestionCard
                 key={index}
