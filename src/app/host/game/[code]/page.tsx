@@ -41,6 +41,23 @@ export default function GamePage() {
     if (!code) return;
 
     const transcriptsRef = query(ref(database, `games/${code}/transcripts`), orderByChild('timestamp'));
+    const questionsRef = ref(database, `games/${code}/questions`);
+    const questionsListener = onValue(questionsRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+
+      const data = snapshot.val();
+
+      const questionEntries: HostQuestion[] = Object.entries(data).map(([key, value]: [string, any]) => ({
+        text: value.text,
+        options: value.options,
+        correctAnswer: value.correctAnswer,
+        answer: value.answer,
+        pushedAt: value.pushedAt,
+        difficulty: value.difficulty,
+      }));
+      
+      setQuestions(questionEntries);
+    });
 
     const loadTranscripts = onValue(transcriptsRef, (snapshot) => {
       const data = snapshot.val();
@@ -60,6 +77,7 @@ export default function GamePage() {
 
     return () => {
       off(transcriptsRef, 'value', loadTranscripts);
+      questionsListener(); // Unsubscribe from questions listener
     };
   }, [code]);
 
@@ -124,10 +142,7 @@ export default function GamePage() {
         throw new Error('Failed to fetch questions');
       }
 
-      const data = await response.json();
-      if (data.questions) {
-        setQuestions((prevQuestions) => [...prevQuestions, ...data.questions]);
-      }
+      await response.json();
     } catch (error) {
       console.error('Error refreshing questions:', error);
     } finally {

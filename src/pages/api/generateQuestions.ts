@@ -82,7 +82,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Push the questions to Firebase
         const questionsRef = db.ref(`games/${gameId}/questions`);
-        await questionsRef.set(questions);
+        const existingQuestionsSnapshot = await questionsRef.get();
+        let existingQuestions: HostQuestion[] = [];
+
+        if (existingQuestionsSnapshot.exists()) {
+          existingQuestions = existingQuestionsSnapshot.val();
+        }
+
+        const updatedQuestions = [...existingQuestions, ...questions];
+        await questionsRef.set(updatedQuestions);
 
         res.status(200).json({ questions: questions });
       } catch (error) {
