@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from "react";
 
-export default function AudioRecorder() {
+interface AudioRecorderProps {
+  gameId: string;
+}
+
+export default function AudioRecorder({ gameId }: AudioRecorderProps) {
   const [recording, setRecording] = useState(false);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -10,6 +14,13 @@ export default function AudioRecorder() {
   const waitingToRestartRef = useRef<boolean>(false);
 
   const sliceDuration = 30 * 1000; // 30 seconds
+
+  // Validate gameId on component mount
+  useEffect(() => {
+    if (!gameId) {
+      throw new Error("The 'gameId' prop is required for the AudioRecorder component.");
+    }
+  }, [gameId]);
 
   const startRecording = async () => {
     try {
@@ -46,7 +57,7 @@ export default function AudioRecorder() {
 
       mediaRecorder.onstop = async () => {
         if (recordedChunks.length > 0) {
-          uploadAudioBlob(recordedChunks);
+          await uploadAudioBlob(recordedChunks);
         }
 
         // If we're still recording and stopping was triggered by interval
@@ -69,7 +80,7 @@ export default function AudioRecorder() {
       mediaRecorderRef.current.stop();
     }
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
     }
     setRecording(false);
   };
@@ -83,27 +94,42 @@ export default function AudioRecorder() {
     const fileName = `audio-${timestamp}.webm`;
     const file = new File([blob], fileName, { type: blob.type });
 
-    
-
     const formData = new FormData();
-    formData.append('file', file);
-    
-    const res = await fetch('/api/transcribe', {
-      method: 'POST',
+    formData.append("file", file);
+    formData.append("gameId", gameId); // Include gameId in the request
+
+    const res = await fetch("/api/transcribe", {
+      method: "POST",
       body: formData,
     });
 
     const data = await res.json();
-    console.log('Transcribed Text:', data.transcript.text);
+    console.log("Transcribed Text:", data.transcript);
   };
 
   return (
-    <div>
-      <button onClick={startRecording} disabled={recording}>
-        Start recording
+    <div className="flex items-center space-x-4">
+      <button
+        onClick={startRecording}
+        disabled={recording}
+        className={`px-6 py-3 rounded-lg font-bold text-white ${
+          recording
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-blue-500 hover:bg-blue-600"
+        }`}
+      >
+        Start Recording
       </button>
-      <button onClick={stopRecording} disabled={!recording}>
-        Stop recording
+      <button
+        onClick={stopRecording}
+        disabled={!recording}
+        className={`px-6 py-3 rounded-lg font-bold text-white ${
+          !recording
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-red-500 hover:bg-red-600"
+        }`}
+      >
+        Stop Recording
       </button>
     </div>
   );

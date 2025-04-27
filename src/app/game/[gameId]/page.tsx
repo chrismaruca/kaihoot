@@ -6,9 +6,10 @@ import QuestionCard from '@/components/QuestionCard';
 import Timer from '@/components/Timer';
 import Leaderboard from '@/components/Leaderboard';
 import PodiumView from '@/components/PodiumView';
-import { getDatabase, ref, onValue, set, get } from 'firebase/database';
-import { app } from '@/lib/firebase';
+import { ref, onValue, set, get } from 'firebase/database';
+import { database } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
+import { Question } from '@/types/types';
 
 interface GamePageProps {
   params: {
@@ -19,9 +20,9 @@ interface GamePageProps {
 export default function GamePage({ params }: GamePageProps) {
   const { gameId } = use(params);
   const searchParams = useSearchParams();
-  const playerName = searchParams.get('player') || 'anonymous';
+  const playerName = searchParams?.get('player') || 'anonymous';
 
-  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [timerKey, setTimerKey] = useState(0);
   const [timeUp, setTimeUp] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
@@ -31,7 +32,6 @@ export default function GamePage({ params }: GamePageProps) {
   const [players, setPlayers] = useState<Array<{name: string, score: number}>>([]);
 
   useEffect(() => {
-    const database = getDatabase(app);
     const questionRef = ref(database, `games/${gameId}/currentQuestion`);
     const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
     const statusRef = ref(database, `games/${gameId}/status`);
@@ -92,7 +92,6 @@ export default function GamePage({ params }: GamePageProps) {
 
       // Update score in Firebase if answer is correct
       if (isCorrect) {
-        const database = getDatabase(app);
         const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
 
         get(scoreRef).then((snapshot) => {
@@ -170,10 +169,9 @@ export default function GamePage({ params }: GamePageProps) {
           {!timeUp && !answerSubmitted ? (
             <div className="mt-8">
               <QuestionCard
-                question={currentQuestion.text}
-                options={currentQuestion.options}
-                timeLimit={currentQuestion.timeLimit}
+                question={currentQuestion}
                 onAnswer={handleAnswer}
+                optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']} // Add colorful options
               />
             </div>
           ) : (
