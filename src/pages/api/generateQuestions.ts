@@ -10,23 +10,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { gameId } = req.body;
-  
+
     try {
         // Fetch the transcript from Firebase
         const transcriptRef = db.ref(`games/${gameId}/transcripts`);
         const snapshot = await transcriptRef.get();
-    
+
         if (!snapshot.exists()) {
           return res.status(404).json({ error: 'Transcript not found for the given gameId' });
         }
-    
+
         // Assuming the transcript is stored as the latest entry in the transcripts node
         const transcripts: TranscriptStep[] = snapshot.val();
         console.log(Object.values(transcripts));
-        const transcript = Object.values(transcripts).reduce((total: string, current: TranscriptStep) => total + `\n${current.timestamp}: ${current.transcript}`, '');
-    
-        // Generate questions from the transcript
-        const response = await generateQuestions(transcript);
+
+        // Extract transcript text and visual context (if available)
+        let visualContext: string | undefined;
+        const transcript = Object.values(transcripts).reduce((total: string, current: TranscriptStep) => {
+          // Check if this step has visualContext and store it
+          if (current.visualContext && !visualContext) {
+            visualContext = current.visualContext;
+          }
+          return total + `\n${current.timestamp}: ${current.transcript}`;
+        }, '');
+
+        // Generate questions from the transcript, passing the visualContext if available
+        const response = await generateQuestions(transcript, visualContext);
 
 
         if (!response || !response.text) {
@@ -60,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Push the questions to Firebase
         const questionsRef = db.ref(`games/${gameId}/questions`);
         await questionsRef.set(questions);
-        
+
         res.status(200).json({ questions: questions });
       } catch (error) {
         console.error('Error generating questions:', error);

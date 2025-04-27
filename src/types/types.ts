@@ -23,9 +23,9 @@ export interface HostQuestionCardProps {
 }
 
 export interface TranscriptStep {
-    transcript: string;
     timestamp: string;
-    context?: string;
+    transcript: string;
+    visualContext?: string;
 }
 
 export interface AnswerButtonProps {

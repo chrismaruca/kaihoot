@@ -20,10 +20,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const busboy = Busboy({ headers: req.headers });
   const uploads: Promise<string>[] = [];
   let gameId: string | null = null;
+  let visualContext: string | null = null;
 
   busboy.on("field", (fieldname, value) => {
     if (fieldname === "gameId") {
       gameId = value;
+    } else if (fieldname === "visualContext") {
+      visualContext = value;
     }
   });
 
@@ -71,6 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await transcriptRef.set({
         transcript: transcript.text,
         timestamp,
+        visualContext: visualContext || null, // Store the visual context if available
       });
 
       res.status(200).json({ transcript: transcript.text });
