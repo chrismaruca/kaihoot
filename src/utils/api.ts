@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, onValue, off } from 'firebase/database';
 import { app } from '../lib/firebase'; // Import the initialized Firebase app
+import { HostQuestion } from '@/types/types';
 
 // Remove the duplicate Firebase configuration and initialization
 const database = getDatabase(app);
@@ -50,4 +51,12 @@ export const submitAnswer = async (gameId: string, playerName: string, answer: n
 
 export const startGame = async (gameId: string): Promise<void> => {
   await set(ref(database, `games/${gameId}/status`), 'active');
+};
+
+export const pushQuestion = async (gameId: string | undefined, question: HostQuestion) => {
+  if (!gameId) {
+    throw new Error('Game ID is required');
+  }
+  const database = getDatabase(app);
+  await set(ref(database, `games/${gameId}/currentQuestion`), question);
 };

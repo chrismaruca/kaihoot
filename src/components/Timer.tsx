@@ -1,55 +1,56 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface TimerProps {
-  duration: number; // in seconds
-  onTimeUp?: () => void;
+  duration: number;
+  onTimeUp: () => void;
 }
 
-export default function Timer({ duration, onTimeUp }: TimerProps) {
+const Timer: React.FC<TimerProps> = ({ duration, onTimeUp }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
-  const timeUpCalledRef = useRef(false);
+
+  // Calculate percentage of time remaining for the progress bar
+  const percentage = (timeLeft / duration) * 100;
+
+  // Determine color based on time remaining
+  let progressColorClass = 'bg-green-500';
+  if (percentage < 30) {
+    progressColorClass = 'bg-red-500';
+  } else if (percentage < 60) {
+    progressColorClass = 'bg-yellow-400';
+  }
 
   useEffect(() => {
-    setTimeLeft(duration);
-    timeUpCalledRef.current = false;
+    if (timeLeft === 0) {
+      onTimeUp();
+      return;
+    }
 
-    const interval = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(interval);
-          // Call onTimeUp when timer reaches zero, but only if it hasn't been called yet
-          if (onTimeUp && !timeUpCalledRef.current) {
-            timeUpCalledRef.current = true;
-            setTimeout(() => {
-              onTimeUp();
-            }, 0);
-          }
-          return 0;
-        }
-        return prevTime - 1;
-      });
+    const timer = setTimeout(() => {
+      setTimeLeft(timeLeft - 1);
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [duration, onTimeUp]);
-
-  // Calculate progress as a percentage
-  const progress = (timeLeft / duration) * 100;
+    return () => clearTimeout(timer);
+  }, [timeLeft, onTimeUp]);
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between mb-1 text-sm">
-        <span>Time left</span>
-        <span>{timeLeft} seconds</span>
+    <div className="w-full max-w-md mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-gray-700 font-medium">Time Remaining:</span>
+        <span className={`font-bold ${timeLeft < 5 ? 'text-red-600' : 'text-blue-700'}`}>
+          {timeLeft} seconds
+        </span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
+
+      <div className="h-4 bg-gray-200 rounded-full overflow-hidden shadow">
         <div
-          className="bg-blue-600 h-2.5 rounded-full"
-          style={{ width: `${progress}%`, transition: 'width 1s linear' }}
+          className={`h-full ${progressColorClass} transition-all duration-1000 ease-linear`}
+          style={{ width: `${percentage}%` }}
         ></div>
       </div>
     </div>
   );
-}
+};
+
+export default Timer;

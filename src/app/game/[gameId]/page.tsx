@@ -6,9 +6,10 @@ import QuestionCard from '@/components/QuestionCard';
 import Timer from '@/components/Timer';
 import Leaderboard from '@/components/Leaderboard';
 import PodiumView from '@/components/PodiumView';
-import { getDatabase, ref, onValue, set, get } from 'firebase/database';
-import { app } from '@/lib/firebase';
+import { ref, onValue, set, get } from 'firebase/database';
+import { database } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
+import { Question } from '@/types/types';
 
 interface GamePageProps {
   params: {
@@ -19,9 +20,9 @@ interface GamePageProps {
 export default function GamePage({ params }: GamePageProps) {
   const { gameId } = use(params);
   const searchParams = useSearchParams();
-  const playerName = searchParams.get('player') || 'anonymous';
+  const playerName = searchParams?.get('player') || 'anonymous';
 
-  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [timerKey, setTimerKey] = useState(0);
   const [timeUp, setTimeUp] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
@@ -31,7 +32,6 @@ export default function GamePage({ params }: GamePageProps) {
   const [players, setPlayers] = useState<Array<{name: string, score: number}>>([]);
 
   useEffect(() => {
-    const database = getDatabase(app);
     const questionRef = ref(database, `games/${gameId}/currentQuestion`);
     const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
     const statusRef = ref(database, `games/${gameId}/status`);
@@ -92,7 +92,6 @@ export default function GamePage({ params }: GamePageProps) {
 
       // Update score in Firebase if answer is correct
       if (isCorrect) {
-        const database = getDatabase(app);
         const scoreRef = ref(database, `games/${gameId}/players/${playerName}/score`);
 
         get(scoreRef).then((snapshot) => {
@@ -141,18 +140,21 @@ export default function GamePage({ params }: GamePageProps) {
   return (
     <div className="container mx-auto p-8">
       <div className="text-right mb-4">
-        <span className="font-bold">Score: {score}</span>
+        <span className="font-bold text-lg py-3 px-6 bg-gray-100 rounded-full shadow-lg inline-block">Score: <span className="text-blue-600">{score}</span></span>
       </div>
 
       {gameStatus === 'ended' ? (
-        <div className="mt-8 p-6 bg-blue-100 rounded-lg text-center">
-          <h3 className="text-2xl font-bold text-blue-700">Game Over!</h3>
-          <p className="text-gray-700 mt-2">Thank you for playing!</p>
-          <p className="text-gray-700 mt-2">Your final score: {score}</p>
+        <div className="mt-8 p-8 bg-gradient-to-b from-purple-600 to-purple-800 rounded-lg text-center shadow-lg text-white transition-all">
+          <h3 className="text-3xl font-bold mb-4">Game Over!</h3>
+          <p className="text-xl mb-2">Thank you for playing!</p>
+          <p className="text-2xl mb-6">Your final score: <span className="font-bold">{score}</span></p>
 
-          <PodiumView players={players} />
+          <div className="p-4 bg-white rounded-lg mb-8">
+            <PodiumView players={players} />
+          </div>
 
-          <div className="mt-6">
+          <div className="mt-6 bg-white rounded-lg p-6 shadow-lg">
+            <h4 className="text-2xl font-bold text-gray-900 mb-4">Final Leaderboard</h4>
             <Leaderboard gameId={gameId} currentPlayerName={playerName} />
           </div>
         </div>
@@ -160,35 +162,45 @@ export default function GamePage({ params }: GamePageProps) {
         <>
           {/* Only show Timer when there's a question and it hasn't been answered yet */}
           {!answerSubmitted && !timeUp && (
-            <Timer
-              key={timerKey}
-              duration={currentQuestion.timeLimit}
-              onTimeUp={handleTimeUp}
-            />
+            <div className="flex justify-center">
+              <Timer
+                key={timerKey}
+                duration={currentQuestion.timeLimit}
+                onTimeUp={handleTimeUp}
+              />
+            </div>
           )}
 
           {!timeUp && !answerSubmitted ? (
-            <div className="mt-8">
+            <div className="mt-6 transition-all transform hover:scale-105">
               <QuestionCard
-                question={currentQuestion.text}
-                options={currentQuestion.options}
-                timeLimit={currentQuestion.timeLimit}
+                question={currentQuestion}
                 onAnswer={handleAnswer}
+                optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']} // Add colorful options
               />
             </div>
           ) : (
-            renderFeedback()
+            <div className="transition-all transform animate-fade-in">
+              {renderFeedback()}
+            </div>
           )}
         </>
       ) : (
-        <div className="mt-8 p-6 bg-gray-100 rounded-lg text-center">
-          <h3 className="text-xl font-bold text-gray-700">Waiting for the host</h3>
-          <p className="text-gray-600 mt-2">The next question will appear here soon...</p>
+        <div className="mt-8 p-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-lg text-center shadow-lg text-white">
+          <h3 className="text-2xl font-bold mb-3">Waiting for the host</h3>
+          <p className="text-lg mt-2 opacity-90">The next question will appear here soon...</p>
+          <div className="mt-4 flex justify-center space-y-2 flex-col items-center">
+            <div className="h-2.5 w-24 bg-blue-100 opacity-50 rounded-full animate-pulse"></div>
+            <div className="h-2.5 w-28 bg-blue-100 opacity-50 rounded-full animate-pulse"></div>
+          </div>
         </div>
       )}
 
       {gameStatus !== 'ended' && (
-        <Leaderboard gameId={gameId} currentPlayerName={playerName} />
+        <div className="mt-8 p-4 bg-white rounded-lg shadow-lg">
+          <h3 className="text-xl font-bold mb-3 text-gray-700">Current Standings</h3>
+          <Leaderboard gameId={gameId} currentPlayerName={playerName} />
+        </div>
       )}
     </div>
   );

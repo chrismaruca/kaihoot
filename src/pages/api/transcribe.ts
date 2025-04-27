@@ -3,6 +3,7 @@ import Busboy from 'busboy';
 import fs from 'fs';
 import path from 'path';
 import { transcribeAudio } from '@/lib/groq';
+import { db } from '@/lib/firebaseAdmin'; // Import Firebase Admin database
 
 // Disable Next.js default body parsing because we're handling files manually
 export const config = {
@@ -18,6 +19,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const busboy = Busboy({ headers: req.headers });
   const uploads: Promise<string>[] = [];
+  let gameId: string | null = null;
+
+  busboy.on("field", (fieldname, value) => {
+    if (fieldname === "gameId") {
+      gameId = value;
+    }
+  });
 
   // @ts-ignore
   busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
@@ -39,6 +47,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const filePaths = await Promise.all(uploads);
 
+      if (!gameId || gameId === 'undefined') {
+        return res.status(400).json({ error: "Missing gameId" });
+      }
+
       if (filePaths.length === 0) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
@@ -53,7 +65,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (err) console.error('Failed to delete temporary file:', err);
       });
 
-      res.status(200).json({ transcript });
+      // Push the transcript to Firebase
+      const timestamp = Date.now();
+      const transcriptRef = db.ref(`games/${gameId}/transcripts/${timestamp}`);
+      await transcriptRef.set({
+        transcript: transcript.text,
+        timestamp,
+      });
+
+      res.status(200).json({ transcript: transcript.text });
     } catch (error) {
       console.error('Error processing file:', error);
       res.status(500).json({ error: 'Failed to process file' });

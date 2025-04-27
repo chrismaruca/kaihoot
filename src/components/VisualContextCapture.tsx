@@ -83,7 +83,7 @@ export default function VisualContextCapture({ onCapture, captureType }: VisualC
         {!isStreaming ? (
           <button
             onClick={startCapture}
-            className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer"
           >
             Start {captureType === 'camera' ? 'Camera' : 'Screen Capture'}
           </button>
@@ -91,13 +91,13 @@ export default function VisualContextCapture({ onCapture, captureType }: VisualC
           <>
             <button
               onClick={captureFrame}
-              className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 cursor-pointer"
             >
               Capture Frame
             </button>
             <button
               onClick={stopCapture}
-              className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 cursor-pointer"
             >
               Stop
             </button>

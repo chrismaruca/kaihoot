@@ -5,6 +5,10 @@ import { useState } from 'react';
 import { getDatabase, ref, set } from 'firebase/database';
 import { app } from '@/lib/firebase';
 import VisualContextCapture from '@/components/VisualContextCapture';
+import AudioRecorder from '@/components/AudioRecorder';
+import HostQuestionCard from '@/components/HostQuestionCard';
+import { HostQuestion } from '@/types/types';
+import { database } from '@/lib/firebase';
 
 export default function GamePage() {
   const params = useParams();
@@ -12,53 +16,75 @@ export default function GamePage() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [captureType, setCaptureType] = useState<'camera' | 'screen'>('camera');
 
-  interface Question {
-    text: string;
-    options: string[];
-    correctAnswer: string;
-    timeLimit: number;
-    visualContext?: string; // Add visual context to the question
-  }
+  const [questions, setQuestions] = useState<HostQuestion[]>([
+    {
+      text: 'What is the capital of France?',
+      options: ['Paris', 'London', 'Berlin', 'Madrid'],
+      correctAnswer: 'Paris',
+      timeLimit: 30,
+    },
+    {
+      text: 'Which planet is known as the Red Planet?',
+      options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
+      correctAnswer: 'Mars',
+      timeLimit: 20,
+    },
+    {
+      text: 'What is 2 + 2?',
+      options: ['3', '4', '5', '6'],
+      correctAnswer: '4',
+      timeLimit: 15,
+    },
+  ]);
 
   const handleCapture = (imageData: string) => {
     setCapturedImage(imageData);
   };
 
-  const pushQuestion = (question: Question) => {
+  const pushQuestionToFirebase = (gameCode: string, question: HostQuestion) => {
     // Include the captured image if available
     const questionWithContext = capturedImage
       ? { ...question, visualContext: capturedImage }
       : question;
 
-    const database = getDatabase(app);
-    set(ref(database, `games/${code}/currentQuestion`), questionWithContext);
+    set(ref(database, `games/${gameCode}/currentQuestion`), questionWithContext);
   };
 
-  const pushQuestion1 = () => {
-    const question = {
-      text: 'What is the capital of France?',
-      options: ['Paris', 'London', 'Berlin', 'Madrid'],
-      correctAnswer: 'Paris',
-      timeLimit: 30, // seconds
-    };
-    pushQuestion(question);
-  };
-
-  const pushQuestion2 = () => {
-    const question = {
-      text: 'Which planet is known as the Red Planet?',
-      options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
-      correctAnswer: 'Mars',
-      timeLimit: 20, // seconds
-    };
-    pushQuestion(question);
+  const handleQuestionSelect = (index: number) => {
+    const selectedQuestion = questions[index];
+    console.log(`Question selected: ${selectedQuestion.text}`);
+    pushQuestionToFirebase(code!, selectedQuestion);
   };
 
   const endGame = () => {
-    const database = getDatabase(app);
     set(ref(database, `games/${code}/status`), 'ended');
     set(ref(database, `games/${code}/currentQuestion`), null);
   };
+
+  const refreshQuestions = async () => {
+    if (!code) return;
+
+    try {
+      const response = await fetch('/api/generateQuestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gameId: code }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
+      }
+
+      const data = await response.json();
+      if (data.questions) {
+        setQuestions((prevQuestions) => [...prevQuestions, ...data.questions]);
+      }
+    } catch (error) {
+      console.error('Error refreshing questions:', error);
+    }
+  }
 
   if (!code) {
     return (
@@ -78,13 +104,13 @@ export default function GamePage() {
         <h2 className="text-2xl font-bold mb-4">Visual Context</h2>
         <div className="flex gap-4 mb-4">
           <button
-            className={`px-4 py-2 rounded ${captureType === 'camera' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded cursor-pointer ${captureType === 'camera' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
             onClick={() => setCaptureType('camera')}
           >
             Use Camera
           </button>
           <button
-            className={`px-4 py-2 rounded ${captureType === 'screen' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded cursor-pointer ${captureType === 'screen' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
             onClick={() => setCaptureType('screen')}
           >
             Share Screen
@@ -104,7 +130,7 @@ export default function GamePage() {
               />
               <button
                 onClick={() => setCapturedImage(null)}
-                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer"
               >
                 ✕
               </button>
@@ -120,24 +146,30 @@ export default function GamePage() {
         <h2 className="text-2xl font-bold mb-4">Question Controls</h2>
         <div className="flex space-x-4 mb-6">
           <button
-            onClick={pushQuestion1}
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-600 cursor-pointer"
+            onClick={refreshQuestions}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 cursor-pointer"
           >
-            Question 1: France
+            Refresh Questions
           </button>
+          <AudioRecorder gameId={code} />
           <button
-            onClick={pushQuestion2}
-            className="bg-green-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-600 cursor-pointer"
+            onClick={endGame}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-600 cursor-pointer"
           >
-            Question 2: Planet
+            End Game
           </button>
         </div>
-        <button
-          onClick={endGame}
-          className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-600 cursor-pointer"
-        >
-          End Game
-        </button>
+
+        <div className="mt-8 w-full max-w-2xl max-h-96 overflow-y-auto border rounded-lg p-4">
+          {questions.map((question, index) => (
+            <HostQuestionCard
+              key={index}
+              question={question}
+              onSelect={() => handleQuestionSelect(index)}
+              optionColors={['#FF5733', '#33FF57', '#3357FF', '#F3FF33']}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
