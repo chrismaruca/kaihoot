@@ -323,14 +323,13 @@ export default function GamePage() {
                 videoRef={videoRef}
                 onVisualStreamChange={setVisualStream}
               />
-              {currentQuestion && (
-                <button
-                  onClick={endCurrentQuestion}
-                  className="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-200 font-semibold shadow-md text-center"
-                >
-                  End Question ⏱️
-                </button>
-              )}
+              <button
+                onClick={endCurrentQuestion}
+                className={`px-6 py-3 ${currentQuestion ? 'bg-yellow-500' : 'bg-gray-400'} text-white rounded-lg ${currentQuestion ? 'hover:bg-yellow-600' : ''} transition duration-200 font-semibold shadow-md text-center`}
+                disabled={!currentQuestion}
+              >
+                End Question ⏱️
+              </button>
               <button
                 onClick={() => setShowModal(true)}
                 className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200 font-semibold shadow-md text-center"
