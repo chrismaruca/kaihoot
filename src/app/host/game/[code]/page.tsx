@@ -7,7 +7,7 @@ import AudioRecorder from '@/components/AudioRecorder';
 import HostQuestionCard from '@/components/HostQuestionCard';
 import { pushQuestion } from '@/utils/api';
 import { HostQuestion } from '@/types/types';
-import { getDatabase, ref, set } from 'firebase/database';
+import { ref, set } from 'firebase/database';
 import { database } from '@/lib/firebase';
 
 export default function GamePage() {

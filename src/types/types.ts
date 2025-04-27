@@ -33,3 +33,16 @@ export interface AnswerButtonProps {
     onClick: () => void;
     disabled?: boolean;
 }
+
+export interface GamePageProps {
+    params: GameParams;
+}
+
+export interface GameParams {
+    gameId: string;
+}
+
+export interface Player {
+    name: string;
+    avatar: string;
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Play } from "next/font/google";
 import "../styles/globals.css";
+import { PlayerProvider } from "@/context/PlayerContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,8 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-gray-100 text-gray-900">
-        <main>{children}</main>
+      <body className="min-h-screen">
+        <PlayerProvider>
+          <main>{children}</main>
+        </PlayerProvider>
       </body>
     </html>
   );

@@ -3,14 +3,21 @@
 import React, { useEffect, useState } from 'react';
 import { getDatabase, ref, onValue } from 'firebase/database';
 import { app } from '@/lib/firebase';
+import { Player } from '@/types/types';
+import Image from 'next/image';
+import { getAvatarPath } from '@/utils/api';
 
 interface LeaderboardProps {
   gameId: string;
   currentPlayerName: string;
 }
 
+interface LeaderboardPlayer extends Player {
+  score: number;
+}
+
 const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) => {
-  const [players, setPlayers] = useState<Array<{ name: string; score: number }>>([]);
+  const [players, setPlayers] = useState<Array<LeaderboardPlayer>>([]);
 
   useEffect(() => {
     const database = getDatabase(app);
@@ -21,7 +28,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) 
         const playersData = snapshot.val();
         const playersArray = Object.entries(playersData).map(([name, data]: [string, any]) => ({
           name,
-          score: data.score || 0
+          score: data.score || 0,
+          avatar: data.avatar || "0" // Default to first avatar if none exists
         }));
 
         // Sort players by score (highest first)
@@ -70,27 +78,42 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) 
         <tbody>
           {players.map((player, index) => (
             <tr
-              key={player.name}
-              className={`
-                border-b border-gray-200
-                ${player.name === currentPlayerName ? 'bg-blue-50 font-semibold' : ''}
-                transition-all hover:bg-gray-100
-              `}
-              style={{ opacity: getOpacity(index) }}
-            >
-              <td className="py-3 px-4 text-left">
-                <div className="flex items-center">
-                  <span className={`h-8 w-8 rounded-full flex items-center justify-center ${getPositionStyle(index)} font-bold mr-2`}>
-                    {index + 1}
-                  </span>
+            key={player.name}
+            className={`
+              border-b border-gray-200
+              ${player.name === currentPlayerName ? 'bg-blue-50 font-semibold' : ''}
+              transition-all hover:bg-gray-100
+            `}
+            style={{ opacity: getOpacity(index) }}
+          >
+            <td className="py-3 px-4 text-left">
+              <div className="flex items-center">
+                <span className={`h-8 w-8 rounded-full flex items-center justify-center ${getPositionStyle(index)} font-bold mr-2`}>
+                  {index + 1}
+                </span>
+              </div>
+            </td>
+            <td className="py-3 px-4 text-left text-gray-800">
+              <div className="flex items-center">
+                {/* Avatar image */}
+                <div className="h-8 w-8 rounded-full overflow-hidden mr-3 border-2 border-gray-200">
+                  <Image 
+                    src={getAvatarPath(parseInt(player.avatar || "0"))}
+                    alt={`${player.name}'s avatar`}
+                    width={32}
+                    height={32}
+                    className="object-cover"
+                  />
                 </div>
-              </td>
-              <td className="py-3 px-4 text-left text-gray-800">
-                {player.name}
-                {player.name === currentPlayerName && <span className="text-blue-600 ml-1">(You)</span>}
-              </td>
-              <td className="py-3 px-4 text-right font-bold text-gray-800">{player.score}</td>
-            </tr>
+                {/* Player name */}
+                <span>
+                  {player.name}
+                  {player.name === currentPlayerName && <span className="text-blue-600 ml-1">(You)</span>}
+                </span>
+              </div>
+            </td>
+            <td className="py-3 px-4 text-right font-bold text-gray-800">{player.score}</td>
+          </tr>
           ))}
         </tbody>
       </table>

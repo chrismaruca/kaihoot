@@ -1,28 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import QuestionCard from '@/components/QuestionCard';
 import Timer from '@/components/Timer';
 import Leaderboard from '@/components/Leaderboard';
 import PodiumView from '@/components/PodiumView';
 import { ref, onValue, set, get } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { useSearchParams } from 'next/navigation';
 import { HostQuestion } from '@/types/types';
+import { GamePageProps } from '@/types/types';
+import { usePlayer } from '@/context/PlayerContext';
 
-interface GamePageProps {
-  params: GameParams;
-}
-
-interface GameParams {
-  gameId: string;
-}
-
-export default function GamePage({ params }: GamePageProps) {
-  const { gameId } = params;
-  const searchParams = useSearchParams();
-  const playerName = searchParams?.get('player') || 'anonymous';
-
+export default function GamePage({params}: GamePageProps) {
+  // @ts-ignore
+  const {gameId} = use(params);
+  const { 
+    player: {
+      name: playerName,
+      avatar: playerAvatar
+    } 
+  } = usePlayer();
+  
   const [currentQuestion, setCurrentQuestion] = useState<HostQuestion | null>(null);
   const [timerKey, setTimerKey] = useState(0);
   const [timeUp, setTimeUp] = useState(false);
@@ -83,6 +81,7 @@ export default function GamePage({ params }: GamePageProps) {
   }, [gameId, playerName]);
 
   const handleAnswer = (index: number) => {
+    console.log(playerName)
     if (currentQuestion && !answerSubmitted && !timeUp) {
       const isCorrect = currentQuestion.correctAnswer === currentQuestion.options[index];
 

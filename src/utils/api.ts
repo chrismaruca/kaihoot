@@ -1,5 +1,4 @@
 import { ref, set, onValue, off } from 'firebase/database';
-import { app } from '../lib/firebase'; // Import the initialized Firebase app
 import { HostQuestion } from '@/types/types';
 import { database } from '../lib/firebase';
 
@@ -29,9 +28,9 @@ export const createGame = async (hostId: string): Promise<string> => {
   return gameId;
 };
 
-export const joinGame = async (gameId: string, playerName: string): Promise<void> => {
+export const joinGame = async (gameId: string, playerName: string, selectedAvatar: string): Promise<void> => {
   const playerRef = ref(database, `games/${gameId}/players/${playerName}`);
-  await set(playerRef, { name: playerName, score: 0 });
+  await set(playerRef, { name: playerName, score: 0, avatar: selectedAvatar });
 };
 
 export const subscribeToGame = (gameId: string, callback: (game: Game) => void) => {
@@ -56,3 +55,6 @@ export const pushQuestion = async (gameId: string | undefined, question: HostQue
   }
   await set(ref(database, `games/${gameId}/currentQuestion`), question);
 };
+
+// Define avatar paths based on index
+export const getAvatarPath = (index: number) => `https://i.pravatar.cc/150?img=${index + 18}`;
