@@ -1,4 +1,4 @@
-import { ref, set, onValue, off } from 'firebase/database';
+import { ref, set, onValue, off, get } from 'firebase/database';
 import { HostQuestion } from '@/types/types';
 import { database } from '../lib/firebase';
 
@@ -53,6 +53,25 @@ export const pushQuestion = async (gameId: string, question: any) => {
   if (!gameId) {
     throw new Error('Game ID is required');
   }
+
+  // archive previous question and its distribution
+  const currentSnap = await get(ref(database, `games/${gameId}/currentQuestion`));
+  const oldQuestion = currentSnap.val();
+  if (oldQuestion) {
+    const ts = oldQuestion.pushedAt || Date.now();
+    const distSnap = await get(ref(database, `games/${gameId}/answerDistributions`));
+    const distribution = distSnap.val() || {};
+    await set(ref(database, `games/${gameId}/archives/${ts}`), { question: oldQuestion, distribution, archivedAt: ts });
+  }
+  // reset answer distributions for new question
+  // Ensure options is an array before reducing
+  const options = Array.isArray(question.options) ? question.options : [];
+  console.log(`Initializing distributions for ${options.length} options in game ${gameId}`);
+  const initialDist = options.reduce((acc, _opt, idx) => {
+    console.log(`Setting option ${idx} to 0`);
+    return { ...acc, [idx]: 0 };
+  }, {} as Record<number, number>);
+  await set(ref(database, `games/${gameId}/answerDistributions`), initialDist);
 
   // Add timestamp to the question
   const questionWithTimestamp = {

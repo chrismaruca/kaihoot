@@ -9,6 +9,7 @@ import { pushQuestion } from '@/utils/api';
 import { HostQuestion } from '@/types/types';
 import { ref, set, onValue, get, off, query, orderByChild } from 'firebase/database';
 import { database } from '@/lib/firebase';
+import AnswerDistribution from '@/components/AnswerDistribution';
 
 export default function GamePage() {
   const params = useParams();
@@ -275,6 +276,18 @@ export default function GamePage() {
           </div>
         </div>
       </div>
+
+      {/* Live Answer Distribution */}
+      {currentQuestion && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">Live Answer Distribution</h2>
+          <AnswerDistribution
+            gameId={code}
+            options={currentQuestion.options || []}
+            optionColors={['#e21b3c', '#1368ce', '#26890c', '#ffa602']}
+          />
+        </div>
+      )}
 
       <div className="w-full max-w-4xl">
         <h2 className="text-2xl font-bold mb-4 text-white text-center">Available Questions</h2>
