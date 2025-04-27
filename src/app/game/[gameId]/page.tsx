@@ -5,6 +5,7 @@ import QuestionCard from '@/components/QuestionCard';
 import Timer from '@/components/Timer';
 import Leaderboard from '@/components/Leaderboard';
 import PodiumView from '@/components/PodiumView';
+import AnswerDistribution from '@/components/AnswerDistribution';
 import { ref, onValue, set, get } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { HostQuestion } from '@/types/types';
@@ -145,6 +146,14 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
     setSelectedAnswerIndex(index);
     setAnswerSubmitted(true);
+
+    // Immediately update answer distribution (separate path prevents question listener reset)
+    const distRef = ref(database, `games/${gameId}/answerDistributions/${index}`);
+    get(distRef).then(snapshot => {
+      const count = snapshot.exists() ? snapshot.val() : 0;
+      set(distRef, count + 1);
+    });
+
     // Don't show feedback yet, just record the answer
   };
 
@@ -276,6 +285,13 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
       {uiState === 'feedback' && currentQuestion && (
         <div className="mt-8 transition-all">
           {renderFeedback()}
+          {/* Show live answer distribution after submitting an answer */}
+          <div className="mt-4">
+            <AnswerDistribution
+              gameId={gameId}
+              options={currentQuestion.options}
+            />
+          </div>
         </div>
       )}
 
