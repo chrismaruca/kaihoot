@@ -79,6 +79,13 @@ export const pushQuestion = async (gameId: string, question: any) => {
     pushedAt: Date.now() // Add current timestamp
   };
 
+  // Sanitize question: remove undefined properties to prevent Firebase errors
+  Object.keys(questionWithTimestamp).forEach(key => {
+    if (questionWithTimestamp[key] === undefined) {
+      delete questionWithTimestamp[key];
+    }
+  });
+
   await set(ref(database, `games/${gameId}/currentQuestion`), questionWithTimestamp);
   await set(ref(database, `games/${gameId}/status`), 'active');
 
