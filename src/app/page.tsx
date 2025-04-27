@@ -57,7 +57,7 @@ export default function Home() {
       {/* Join a game section */}
       <div className="flex flex-col gap-4 w-full">
         <h2 className="text-2xl font-semibold text-center text-gray-800">Join a room</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={gameCode}
@@ -68,7 +68,7 @@ export default function Home() {
           />
           <button
             onClick={handleJoinGame}
-            className="bg-green-500 text-white px-8 py-4 text-lg rounded-lg font-bold hover:bg-green-600 transition-colors"
+            className="w-full sm:w-auto bg-green-500 text-white px-8 py-4 text-lg rounded-lg font-bold hover:bg-green-600 transition-colors"
           >
             Join
           </button>

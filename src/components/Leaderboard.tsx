@@ -65,8 +65,52 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) 
     return <div className="text-center p-4 text-gray-500">No players have joined yet...</div>;
   }
 
-  return (
-    <div className="overflow-hidden rounded-lg">
+  // Mobile view - card-based layout
+  const renderMobileView = () => (
+    <div className="space-y-2 md:hidden">
+      {players.map((player, index) => (
+        <div 
+          key={player.name}
+          className={`
+            p-3 rounded-lg border border-gray-200 shadow-sm
+            ${player.name === currentPlayerName ? 'bg-blue-50 border-blue-200' : 'bg-white'}
+          `}
+          style={{ opacity: getOpacity(index) }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className={`h-8 w-8 rounded-full flex items-center justify-center ${getPositionStyle(index)} font-bold`}>
+                {index + 1}
+              </span>
+              
+              <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-gray-200">
+                <Image 
+                  src={getAvatarPath(parseInt(player.avatar || "0"))}
+                  alt={`${player.name}'s avatar`}
+                  width={32}
+                  height={32}
+                  className="object-cover"
+                />
+              </div>
+              
+              <span className="font-medium">
+                {player.name}
+                {player.name === currentPlayerName && <span className="text-blue-600 ml-1">(You)</span>}
+              </span>
+            </div>
+            
+            <div className="font-bold text-lg text-gray-800">
+              {player.score}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  // Desktop view - table layout
+  const renderDesktopView = () => (
+    <div className="hidden md:block overflow-hidden rounded-lg">
       <table className="w-full">
         <thead>
           <tr className="bg-blue-600 text-white">
@@ -78,45 +122,50 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ gameId, currentPlayerName }) 
         <tbody>
           {players.map((player, index) => (
             <tr
-            key={player.name}
-            className={`
-              border-b border-gray-200
-              ${player.name === currentPlayerName ? 'bg-blue-50 font-semibold' : ''}
-              transition-all hover:bg-gray-100
-            `}
-            style={{ opacity: getOpacity(index) }}
-          >
-            <td className="py-3 px-4 text-left">
-              <div className="flex items-center">
-                <span className={`h-8 w-8 rounded-full flex items-center justify-center ${getPositionStyle(index)} font-bold mr-2`}>
-                  {index + 1}
-                </span>
-              </div>
-            </td>
-            <td className="py-3 px-4 text-left text-gray-800">
-              <div className="flex items-center">
-                {/* Avatar image */}
-                <div className="h-8 w-8 rounded-full overflow-hidden mr-3 border-2 border-gray-200">
-                  <Image 
-                    src={getAvatarPath(parseInt(player.avatar || "0"))}
-                    alt={`${player.name}'s avatar`}
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                  />
+              key={player.name}
+              className={`
+                border-b border-gray-200
+                ${player.name === currentPlayerName ? 'bg-blue-50 font-semibold' : ''}
+                transition-all hover:bg-gray-100
+              `}
+              style={{ opacity: getOpacity(index) }}
+            >
+              <td className="py-3 px-4 text-left">
+                <div className="flex items-center">
+                  <span className={`h-8 w-8 rounded-full flex items-center justify-center ${getPositionStyle(index)} font-bold mr-2`}>
+                    {index + 1}
+                  </span>
                 </div>
-                {/* Player name */}
-                <span>
-                  {player.name}
-                  {player.name === currentPlayerName && <span className="text-blue-600 ml-1">(You)</span>}
-                </span>
-              </div>
-            </td>
-            <td className="py-3 px-4 text-right font-bold text-gray-800">{player.score}</td>
-          </tr>
+              </td>
+              <td className="py-3 px-4 text-left text-gray-800">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full overflow-hidden mr-3 border-2 border-gray-200">
+                    <Image 
+                      src={getAvatarPath(parseInt(player.avatar || "0"))}
+                      alt={`${player.name}'s avatar`}
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                    />
+                  </div>
+                  <span>
+                    {player.name}
+                    {player.name === currentPlayerName && <span className="text-blue-600 ml-1">(You)</span>}
+                  </span>
+                </div>
+              </td>
+              <td className="py-3 px-4 text-right font-bold text-gray-800">{player.score}</td>
+            </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  );
+
+  return (
+    <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+      {renderMobileView()}
+      {renderDesktopView()}
     </div>
   );
 };
