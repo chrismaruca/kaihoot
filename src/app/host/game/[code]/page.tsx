@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { getDatabase, ref, set } from 'firebase/database';
 import { app } from '@/lib/firebase';
 import VisualContextCapture from '@/components/VisualContextCapture';
@@ -15,6 +15,8 @@ export default function GamePage() {
   const code = params?.code as string | undefined;
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [captureType, setCaptureType] = useState<'camera' | 'screen'>('camera');
+  const [isAutoCapturing, setIsAutoCapturing] = useState<boolean>(false);
+  const captureIntervalRef = useRef<number>(10000); // 10 seconds default
 
   const [questions, setQuestions] = useState<HostQuestion[]>([
     {
@@ -39,6 +41,57 @@ export default function GamePage() {
 
   const handleCapture = (imageData: string) => {
     setCapturedImage(imageData);
+    // Store the latest captured frame in the game's visual context
+    if (code) {
+      // Ensure the imageData is properly formatted
+      // Some image data might be too large, so consider compressing or limiting size
+      set(ref(database, `games/${code}/currentVisualContext`), {
+        image: imageData,
+        timestamp: Date.now()
+      }).catch(error => {
+        console.error("Failed to save image to Firebase:", error);
+      });
+    }
+  };
+
+  const handleTranscriptionWithContext = (transcription: string) => {
+    if (!code) return;
+
+    const timestamp = Date.now();
+    const transcriptionPath = `games/${code}/transcriptions/${timestamp}`;
+
+    // Create basic transcription data
+    const transcriptionData: any = {
+      text: transcription,
+      timestamp: timestamp
+    };
+
+    // Add visual context if available
+    if (capturedImage) {
+      // Create a separate entry for the image due to potential size limitations
+      const imageRef = ref(database, `games/${code}/visualContexts/${timestamp}`);
+      set(imageRef, {
+        image: capturedImage,
+        timestamp: timestamp
+      }).then(() => {
+        // Then update the transcription with a reference to the image
+        transcriptionData.visualContextRef = `visualContexts/${timestamp}`;
+        set(ref(database, transcriptionPath), transcriptionData).catch(err => {
+          console.error("Error saving transcription data:", err);
+        });
+      }).catch(error => {
+        console.error("Error saving visual context:", error);
+        // If image fails, at least save the transcription
+        set(ref(database, transcriptionPath), transcriptionData).catch(err => {
+          console.error("Error saving transcription data:", err);
+        });
+      });
+    } else {
+      // No image, just save the transcription
+      set(ref(database, transcriptionPath), transcriptionData).catch(err => {
+        console.error("Error saving transcription data:", err);
+      });
+    }
   };
 
   const pushQuestionToFirebase = (gameCode: string, question: HostQuestion) => {
@@ -86,6 +139,10 @@ export default function GamePage() {
     }
   }
 
+  const toggleAutoCapture = () => {
+    setIsAutoCapturing(!isAutoCapturing);
+  };
+
   if (!code) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -117,7 +174,12 @@ export default function GamePage() {
           </button>
         </div>
 
-        <VisualContextCapture onCapture={handleCapture} captureType={captureType} />
+        <VisualContextCapture
+          onCapture={handleCapture}
+          captureType={captureType}
+          autoCapture={isAutoCapturing}
+          captureInterval={captureIntervalRef.current}
+        />
 
         {capturedImage && (
           <div className="mt-4">
@@ -136,7 +198,7 @@ export default function GamePage() {
               </button>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              This image will be included with the next question
+              This image will be included with the next question or transcription
             </p>
           </div>
         )}
@@ -151,7 +213,16 @@ export default function GamePage() {
           >
             Refresh Questions
           </button>
-          <AudioRecorder gameId={code} />
+          <AudioRecorder
+            gameId={code}
+            onTranscription={handleTranscriptionWithContext}
+          />
+          <button
+            onClick={toggleAutoCapture}
+            className={`px-4 py-2 rounded-lg font-bold ${isAutoCapturing ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-purple-500 hover:bg-purple-600'} text-white cursor-pointer`}
+          >
+            {isAutoCapturing ? 'Disable Auto-Capture' : 'Enable Auto-Capture'}
+          </button>
           <button
             onClick={endGame}
             className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-600 cursor-pointer"
