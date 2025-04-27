@@ -81,20 +81,9 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
 
         if (status === 'ended') {
           // If there is a current question and time isn't up yet, this is a question ending
-          if (currentQuestion && !timeUp && !isQuestionEndingRef.current) {
-            isQuestionEndingRef.current = true;
-            setTimeUp(true);
-            setUiState('feedback'); // Show feedback when question ends
-
-            // Reset the flag after a short delay
-            setTimeout(() => {
-              isQuestionEndingRef.current = false;
-            }, 1000);
-          } else if (!isQuestionEndingRef.current) {
             // This is an actual game end
             setIsGameEnded(true);
             setUiState('gameOver');
-          }
         }
 
         setGameStatus(status);
@@ -113,12 +102,13 @@ export default function GamePage({ params }: { params: { gameId: string } }) {
         setJoinedLate(false);
         setUiState('question'); // Show question UI when a new question arrives
         setIsGameEnded(false);
-      } else if (gameStatus === 'ended' && !isQuestionEndingRef.current) {
+      } else if (gameStatus === 'ended') {
         setIsGameEnded(true);
         setUiState('gameOver');
-      } else {
-        setUiState('waiting');
       }
+      // } else {
+      //   setUiState('waiting');
+      // }
     });
 
     // Listen for players and their scores

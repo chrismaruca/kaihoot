@@ -149,7 +149,6 @@ export default function GamePage() {
 
   const endGame = () => {
     set(ref(database, `games/${code}/status`), 'ended');
-    set(ref(database, `games/${code}/currentQuestion`), null);
   };
 
   // Add function to end current question
@@ -162,9 +161,6 @@ export default function GamePage() {
       startTime: Date.now() - (currentQuestion.timeLimit * 1000),
       endTime: Date.now()
     });
-
-    // Also set the status to ended to ensure all clients get the notification
-    set(ref(database, `games/${code}/status`), 'ended');
 
     // Briefly after, reset to active so the next question can be selected
     setTimeout(() => {
@@ -269,18 +265,18 @@ export default function GamePage() {
           </div>
 
           {/* Main Game Controls */}
-            <div className="flex flex-col sm:flex-row gap-2"> 
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={refreshQuestions}
                 disabled={isLoading}
                 className={`
-                  px-6 py-3 
-                  ${isLoading ? 'bg-gray-400' : 'bg-blue-500'} 
-                  text-white rounded-lg 
-                  hover:${isLoading ? '' : 'bg-blue-600'} 
-                  transition duration-200 
-                  font-semibold 
-                  shadow-md 
+                  px-6 py-3
+                  ${isLoading ? 'bg-gray-400' : 'bg-blue-500'}
+                  text-white rounded-lg
+                  hover:${isLoading ? '' : 'bg-blue-600'}
+                  transition duration-200
+                  font-semibold
+                  shadow-md
                   text-center
                   border-2
                   relative

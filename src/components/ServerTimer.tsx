@@ -21,14 +21,6 @@ const ServerTimer: React.FC<ServerTimerProps> = ({ gameId, onTimeUp }) => {
     // Listen for game status changes
     const statusUnsubscribe = onValue(statusRef, (snapshot) => {
       const status = snapshot.val();
-      // If the status is 'ended', immediately end the timer
-      if (status === 'ended') {
-        if (intervalId) {
-          clearInterval(intervalId);
-        }
-        setTimeLeft(0);
-        onTimeUp();
-      }
     });
 
     // Listen for timer updates from Firebase
